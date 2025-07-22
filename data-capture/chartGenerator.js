@@ -70,7 +70,7 @@ class ChartGenerator {
   }
 
   async fetchChartData(title, config) {
-    const metricKey = this.extractMetricKey(title);
+    const metricKey = config.metric === '*' ? 'all' : config.metric;
     const yAxisName = config['y-axis'];
     const now = Math.floor(Date.now() / 1000);
     const startTime = this.getStartTime(config.limit, now);
@@ -258,19 +258,6 @@ class ChartGenerator {
     return now - (value * units[unit]);
   }
 
-  extractMetricKey(title) {
-    const matches = title.match(/:\s*([^(]+)/);
-    if (matches && matches[1]) {
-      const domain = matches[1].trim();
-      
-      if (domain.includes('bigdeskenergy')) return 'bde';
-      if (domain.includes('google')) return 'google';
-      if (domain.toLowerCase().includes('all sites')) return 'all';
-      
-      return domain.toLowerCase().replace(/[^a-z0-9]/g, '');
-    }
-    return null;
-  }
 
   sanitizeFilename(title) {
     return title.toLowerCase()
@@ -296,7 +283,7 @@ class ChartGenerator {
       
       // Get the rollup interval
       const increment = config.source.replace('rollup-', '');
-      const metricKey = this.extractMetricKey(title);
+      const metricKey = config.metric === '*' ? 'all' : config.metric;
       const yAxisName = config['y-axis'];
       
       // Check latest rollup timestamp
