@@ -60,7 +60,7 @@ The system currently monitors:
 - `google.com` response time
 
 ### Implementation Notes
-- Uses TypeScript with ESM modules (requires Node.js v24+ with --experimental-strip-types)
+- Uses TypeScript with ESM modules (requires Node.js v24+)
 - Winston logger writes to `/logs` directory
 - No test framework is configured
 - Generates static PNG charts served by a simple HTTP server
