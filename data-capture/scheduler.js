@@ -1,0 +1,82 @@
+const cron = require('node-cron');
+const CommandExecutor = require('./executor');
+const Database = require('./database');
+
+class MetricScheduler {
+  constructor(config, database, logger) {
+    this.config = config;
+    this.database = database;
+    this.logger = logger;
+    this.executor = new CommandExecutor(logger);
+    this.tasks = new Map();
+    this.intervals = new Map();
+  }
+
+  start() {
+    const metrics = this.config.getMetrics();
+    
+    for (const [key, metric] of Object.entries(metrics)) {
+      this.scheduleMetric(key, metric);
+    }
+    
+    this.logger.info(`Started ${this.tasks.size} metric collection tasks`);
+  }
+
+  scheduleMetric(key, metric) {
+    const frequencyMs = this.config.parseFrequency(metric.frequency);
+    
+    if (!frequencyMs) {
+      this.logger.error(`Invalid frequency for metric ${key}: ${metric.frequency}`);
+      return;
+    }
+
+    this.executeMetric(key, metric);
+    
+    const interval = setInterval(() => {
+      this.executeMetric(key, metric);
+    }, frequencyMs);
+    
+    this.intervals.set(key, interval);
+    this.logger.info(`Scheduled metric "${key}" to run every ${metric.frequency}`);
+  }
+
+  async executeMetric(key, metric) {
+    try {
+      this.logger.debug(`Executing metric "${key}": ${metric.command}`);
+      
+      const result = await this.executor.execute(metric.command);
+      const timestamp = Math.floor(Date.now() / 1000);
+      
+      if (result.success) {
+        for (const m of result.metrics) {
+          await this.database.insertMetric(
+            timestamp,
+            key,
+            m.name,
+            m.value,
+            m.unit
+          );
+        }
+        
+        this.logger.debug(`Stored ${result.metrics.length} metrics for "${key}"`);
+      } else {
+        this.logger.error(`Failed to execute metric "${key}": ${result.error}`);
+      }
+    } catch (error) {
+      this.logger.error(`Error processing metric "${key}": ${error.message}`);
+    }
+  }
+
+  stop() {
+    for (const [key, interval] of this.intervals) {
+      clearInterval(interval);
+      this.logger.debug(`Stopped metric collection for "${key}"`);
+    }
+    
+    this.intervals.clear();
+    this.tasks.clear();
+    this.logger.info('Stopped all metric collection tasks');
+  }
+}
+
+module.exports = MetricScheduler;

@@ -1,0 +1,35 @@
+{
+  "metrics": {
+    "bde": {
+      "command": "curl -o /dev/null -s -w 'duration: %{time_total} s\\nstatus: %{http_code}' https://www.bigdeskenergy.com",
+      "frequency": "30s"
+    },
+    "google": {
+      "command": "curl -o /dev/null -s -w 'duration: %{time_total} s\\nstatus: %{http_code}' https://www.google.com",
+      "frequency": "1m"
+    }
+  },
+  "graphs": {
+    "Response Time: www.bigdeskenergy.com (Last hour)": {
+      "source": "latest",
+      "limit": "1h",
+      "type": "LineChart",
+      "x-axis": "timestamp",
+      "y-axis": "duration"
+    },
+    "Response Time: www.bigdeskenergy.com (Last 24 hours)": {
+      "source": "rollup-5m",
+      "limit": "24h",
+      "type": "LineChart",
+      "x-axis": "timestamp",
+      "y-axis": "duration"
+    },
+    "Status Codes: All Sites (Last hour)": {
+      "source": "latest",
+      "limit": "1h",
+      "type": "BarChart",
+      "x-axis": "timestamp",
+      "y-axis": "status"
+    }
+  }
+}
