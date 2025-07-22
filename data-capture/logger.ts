@@ -1,7 +1,11 @@
-const winston = require('winston');
-const path = require('path');
+import winston from 'winston';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const createLogger = () => {
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const createLogger = (): winston.Logger => {
   const logFormat = winston.format.combine(
     winston.format.timestamp({
       format: 'YYYY-MM-DD HH:mm:ss'
@@ -29,11 +33,11 @@ const createLogger = () => {
         )
       }),
       new winston.transports.File({
-        filename: path.join(__dirname, '..', 'logs', 'error.log'),
+        filename: join(__dirname, '..', 'logs', 'error.log'),
         level: 'error'
       }),
       new winston.transports.File({
-        filename: path.join(__dirname, '..', 'logs', 'combined.log')
+        filename: join(__dirname, '..', 'logs', 'combined.log')
       })
     ]
   });
@@ -41,4 +45,4 @@ const createLogger = () => {
   return logger;
 };
 
-module.exports = createLogger;
+export default createLogger();

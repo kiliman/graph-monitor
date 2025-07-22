@@ -1,13 +1,30 @@
-const { exec } = require('child_process');
-const { promisify } = require('util');
+import { exec } from 'node:child_process';
+import { promisify } from 'node:util';
+import type winston from 'winston';
+
 const execAsync = promisify(exec);
 
+interface Metric {
+  name: string;
+  value: number | string;
+  unit: string | null;
+}
+
+interface ExecutionResult {
+  success: boolean;
+  metrics: Metric[];
+  duration?: number;
+  error?: string;
+}
+
 class CommandExecutor {
-  constructor(logger) {
+  private logger: winston.Logger;
+
+  constructor(logger: winston.Logger) {
     this.logger = logger;
   }
 
-  async execute(command) {
+  async execute(command: string): Promise<ExecutionResult> {
     try {
       const startTime = Date.now();
       const { stdout, stderr } = await execAsync(command, { 
@@ -34,7 +51,7 @@ class CommandExecutor {
         metrics,
         duration
       };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Command execution failed: ${error.message}`);
       return {
         success: false,
@@ -44,8 +61,8 @@ class CommandExecutor {
     }
   }
 
-  parseOutput(output) {
-    const metrics = [];
+  private parseOutput(output: string): Metric[] {
+    const metrics: Metric[] = [];
     const lines = output.trim().split('\n');
     
     for (const line of lines) {
@@ -77,4 +94,4 @@ class CommandExecutor {
   }
 }
 
-module.exports = CommandExecutor;
+export default CommandExecutor;

@@ -1,15 +1,46 @@
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
+import sqlite3 from 'sqlite3';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+interface RunResult {
+  id: number;
+  changes: number;
+}
+
+interface MetricRow {
+  value: number;
+}
+
+interface LatestMetric {
+  timestamp: number;
+  value: number;
+  unit?: string;
+}
+
+interface RollupData {
+  timestamp: number;
+  min: number;
+  max: number;
+  average: number;
+  unit?: string;
+}
 
 class Database {
-  constructor(dbPath) {
-    this.dbPath = dbPath || path.join(__dirname, '..', 'metrics.db');
+  private dbPath: string;
+  private db: sqlite3.Database | null;
+
+  constructor(dbPath?: string) {
+    this.dbPath = dbPath || join(__dirname, '..', 'metrics.db');
     this.db = null;
   }
 
-  async connect() {
+  async connect(): Promise<void> {
     return new Promise((resolve, reject) => {
-      this.db = new sqlite3.Database(this.dbPath, (err) => {
+      const sqlite = sqlite3.verbose();
+      this.db = new sqlite.Database(this.dbPath, (err) => {
         if (err) {
           reject(err);
         } else {
@@ -19,13 +50,13 @@ class Database {
     });
   }
 
-  async initialize() {
+  async initialize(): Promise<void> {
     await this.connect();
     await this.createTables();
     await this.createIndexes();
   }
 
-  async createTables() {
+  async createTables(): Promise<void> {
     const createMetricsTable = `
       CREATE TABLE IF NOT EXISTS metrics (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -57,7 +88,7 @@ class Database {
     await this.run(createRollupsTable);
   }
 
-  async createIndexes() {
+  async createIndexes(): Promise<void> {
     const indexes = [
       'CREATE INDEX IF NOT EXISTS idx_metrics_timestamp ON metrics(timestamp)',
       'CREATE INDEX IF NOT EXISTS idx_metrics_key_name ON metrics(key, name)',
@@ -72,7 +103,7 @@ class Database {
     }
   }
 
-  async insertMetric(timestamp, key, name, value, unit) {
+  async insertMetric(timestamp: number, key: string, name: string, value: number, unit?: string): Promise<RunResult> {
     const sql = `
       INSERT OR REPLACE INTO metrics (timestamp, key, name, value, unit)
       VALUES (?, ?, ?, ?, ?)
@@ -80,7 +111,16 @@ class Database {
     return this.run(sql, [timestamp, key, name, value, unit]);
   }
 
-  async insertRollup(increment, timestamp, key, name, unit, min, max, average) {
+  async insertRollup(
+    increment: string,
+    timestamp: number,
+    key: string,
+    name: string,
+    unit: string | undefined,
+    min: number,
+    max: number,
+    average: number
+  ): Promise<RunResult> {
     const sql = `
       INSERT OR REPLACE INTO rollups (increment, timestamp, key, name, unit, min, max, average)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -88,7 +128,7 @@ class Database {
     return this.run(sql, [increment, timestamp, key, name, unit, min, max, average]);
   }
 
-  async getMetricsForRollup(key, name, startTime, endTime) {
+  async getMetricsForRollup(key: string, name: string, startTime: number, endTime: number): Promise<MetricRow[]> {
     const sql = `
       SELECT value
       FROM metrics
@@ -98,7 +138,7 @@ class Database {
     return this.all(sql, [key, name, startTime, endTime]);
   }
 
-  async getLatestMetrics(key, name, limit) {
+  async getLatestMetrics(key: string, name: string, limit: number): Promise<LatestMetric[]> {
     const sql = `
       SELECT timestamp, value, unit
       FROM metrics
@@ -109,7 +149,7 @@ class Database {
     return this.all(sql, [key, name, limit]);
   }
 
-  async getRollupData(increment, key, name, startTime) {
+  async getRollupData(increment: string, key: string, name: string, startTime: number): Promise<RollupData[]> {
     const sql = `
       SELECT timestamp, min, max, average, unit
       FROM rollups
@@ -120,7 +160,7 @@ class Database {
     return this.all(sql, [increment, key, name, startTime]);
   }
 
-  async cleanupOldRollups(increment, key, name) {
+  async cleanupOldRollups(increment: string, key: string, name: string): Promise<RunResult> {
     const sql = `
       DELETE FROM rollups
       WHERE increment = ? AND key = ? AND name = ?
@@ -134,9 +174,9 @@ class Database {
     return this.run(sql, [increment, key, name, increment, key, name]);
   }
 
-  run(sql, params = []) {
+  private run(sql: string, params: any[] = []): Promise<RunResult> {
     return new Promise((resolve, reject) => {
-      this.db.run(sql, params, function(err) {
+      this.db!.run(sql, params, function(err) {
         if (err) {
           reject(err);
         } else {
@@ -146,19 +186,19 @@ class Database {
     });
   }
 
-  all(sql, params = []) {
+  private all<T = any>(sql: string, params: any[] = []): Promise<T[]> {
     return new Promise((resolve, reject) => {
-      this.db.all(sql, params, (err, rows) => {
+      this.db!.all(sql, params, (err, rows) => {
         if (err) {
           reject(err);
         } else {
-          resolve(rows);
+          resolve(rows as T[]);
         }
       });
     });
   }
 
-  close() {
+  async close(): Promise<void> {
     return new Promise((resolve, reject) => {
       if (this.db) {
         this.db.close((err) => {
@@ -175,4 +215,4 @@ class Database {
   }
 }
 
-module.exports = Database;
+export default Database;

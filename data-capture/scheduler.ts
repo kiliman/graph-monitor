@@ -1,8 +1,33 @@
-const CommandExecutor = require('./executor');
-const Database = require('./database');
+import CommandExecutor from './executor.ts';
+import type Database from './database.ts';
+import type ConfigLoader from './config.ts';
+import type RollupManager from './rollup.ts';
+import type winston from 'winston';
+
+interface Metric {
+  command: string;
+  [key: string]: any;
+}
+
+interface StoredMetric {
+  key: string;
+  name: string;
+}
 
 class MetricScheduler {
-  constructor(config, database, logger, rollupManager) {
+  private config: ConfigLoader;
+  private database: Database;
+  private logger: winston.Logger;
+  private rollupManager: RollupManager | null;
+  private executor: CommandExecutor;
+  private mainInterval: NodeJS.Timeout | null;
+
+  constructor(
+    config: ConfigLoader,
+    database: Database,
+    logger: winston.Logger,
+    rollupManager: RollupManager | null
+  ) {
     this.config = config;
     this.database = database;
     this.logger = logger;
@@ -11,7 +36,7 @@ class MetricScheduler {
     this.mainInterval = null;
   }
 
-  start() {
+  start(): void {
     const metrics = this.config.getMetrics();
 
     // Execute all metrics immediately
@@ -25,7 +50,7 @@ class MetricScheduler {
     this.logger.info(`Started metric collection - running all metrics every minute`);
   }
 
-  async executeAllMetrics() {
+  async executeAllMetrics(): Promise<void> {
     const metrics = this.config.getMetrics();
 
     for (const [key, metric] of Object.entries(metrics)) {
@@ -33,7 +58,7 @@ class MetricScheduler {
     }
   }
 
-  async executeMetric(key, metric) {
+  async executeMetric(key: string, metric: Metric): Promise<void> {
     try {
       this.logger.debug(`Executing metric "${key}": ${metric.command}`);
 
@@ -43,14 +68,14 @@ class MetricScheduler {
       const timestamp = Math.round(now / 60) * 60;
 
       if (result.success) {
-        const storedMetrics = [];
+        const storedMetrics: StoredMetric[] = [];
         for (const m of result.metrics) {
           await this.database.insertMetric(
             timestamp,
             key,
             m.name,
-            m.value,
-            m.unit
+            typeof m.value === 'number' ? m.value : parseFloat(m.value as string),
+            m.unit || undefined
           );
           storedMetrics.push({ key, name: m.name });
         }
@@ -64,12 +89,12 @@ class MetricScheduler {
       } else {
         this.logger.error(`Failed to execute metric "${key}": ${result.error}`);
       }
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Error processing metric "${key}": ${error.message}`);
     }
   }
 
-  reload(newConfig) {
+  reload(newConfig: ConfigLoader): void {
     this.logger.info('Reloading metric scheduler with new configuration...');
 
     // Stop the main interval
@@ -82,7 +107,7 @@ class MetricScheduler {
     this.start();
   }
 
-  stop() {
+  stop(): void {
     if (this.mainInterval) {
       clearInterval(this.mainInterval);
     }
@@ -91,4 +116,4 @@ class MetricScheduler {
   }
 }
 
-module.exports = MetricScheduler;
+export default MetricScheduler;

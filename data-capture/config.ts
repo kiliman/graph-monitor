@@ -1,19 +1,48 @@
-const fs = require('fs');
-const path = require('path');
+import { readFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+interface Metric {
+  command: string;
+  [key: string]: any;
+}
+
+interface Graph {
+  metric: string;
+  [key: string]: any;
+}
+
+interface Config {
+  metrics: Record<string, Metric>;
+  graphs?: Record<string, Graph>;
+  [key: string]: any;
+}
+
+interface ReloadResult {
+  success: boolean;
+  config?: Config;
+  error?: string;
+}
 
 class ConfigLoader {
-  constructor(configPath) {
-    this.configPath = configPath || path.join(__dirname, '..', 'config.json');
+  private configPath: string;
+  private config: Config | null;
+
+  constructor(configPath?: string) {
+    this.configPath = configPath || join(__dirname, '..', 'config.json');
     this.config = null;
   }
 
-  load() {
+  load(): Config {
     try {
-      const configData = fs.readFileSync(this.configPath, 'utf8');
+      const configData = readFileSync(this.configPath, 'utf8');
       this.config = JSON.parse(configData);
       this.validate();
-      return this.config;
-    } catch (error) {
+      return this.config!;
+    } catch (error: any) {
       if (error.code === 'ENOENT') {
         throw new Error(`Configuration file not found at ${this.configPath}`);
       } else if (error instanceof SyntaxError) {
@@ -23,10 +52,10 @@ class ConfigLoader {
     }
   }
 
-  reload() {
+  reload(): ReloadResult {
     try {
-      const configData = fs.readFileSync(this.configPath, 'utf8');
-      const newConfig = JSON.parse(configData);
+      const configData = readFileSync(this.configPath, 'utf8');
+      const newConfig = JSON.parse(configData) as Config;
       
       // Store old config in case validation fails
       const oldConfig = this.config;
@@ -35,12 +64,12 @@ class ConfigLoader {
       try {
         this.validate();
         return { success: true, config: this.config };
-      } catch (validationError) {
+      } catch (validationError: any) {
         // Restore old config if validation fails
         this.config = oldConfig;
         return { success: false, error: validationError.message };
       }
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof SyntaxError) {
         return { success: false, error: `Invalid JSON: ${error.message}` };
       }
@@ -48,8 +77,8 @@ class ConfigLoader {
     }
   }
 
-  validate() {
-    if (!this.config.metrics || typeof this.config.metrics !== 'object') {
+  private validate(): void {
+    if (!this.config?.metrics || typeof this.config.metrics !== 'object') {
       throw new Error('Configuration must contain a "metrics" object');
     }
 
@@ -77,19 +106,19 @@ class ConfigLoader {
   }
 
 
-  getMetrics() {
+  getMetrics(): Record<string, Metric> {
     if (!this.config) {
       this.load();
     }
-    return this.config.metrics;
+    return this.config!.metrics;
   }
 
-  getGraphs() {
+  getGraphs(): Record<string, Graph> {
     if (!this.config) {
       this.load();
     }
-    return this.config.graphs || {};
+    return this.config!.graphs || {};
   }
 }
 
-module.exports = ConfigLoader;
+export default ConfigLoader;

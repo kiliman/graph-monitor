@@ -1,15 +1,29 @@
-const ConfigLoader = require('./config');
-const Database = require('./database');
-const MetricScheduler = require('./scheduler');
-const RollupManager = require('./rollup');
-const ChartGenerator = require('./chartGenerator');
-const createLogger = require('./logger');
-const fs = require('fs');
-const path = require('path');
+import ConfigLoader from './config.ts';
+import Database from './database.ts';
+import MetricScheduler from './scheduler.ts';
+import RollupManager from './rollup.ts';
+import ChartGenerator from './chartGenerator.ts';
+import logger from './logger.ts';
+import { watchFile, unwatchFile, existsSync, mkdirSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import type winston from 'winston';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 class DataCaptureService {
+  private logger: winston.Logger;
+  private config: ConfigLoader;
+  private database: Database;
+  private scheduler: MetricScheduler | null;
+  private rollupManager: RollupManager | null;
+  private chartGenerator: ChartGenerator | null;
+  private chartInterval: NodeJS.Timeout | null;
+  private configWatcher: any;
+
   constructor() {
-    this.logger = createLogger();
+    this.logger = logger;
     this.config = new ConfigLoader();
     this.database = new Database();
     this.scheduler = null;
@@ -19,7 +33,7 @@ class DataCaptureService {
     this.configWatcher = null;
   }
 
-  async start() {
+  async start(): Promise<void> {
     try {
       this.logger.info('Starting Data Capture Service...');
       
@@ -47,35 +61,36 @@ class DataCaptureService {
       this.setupShutdownHandlers();
       
       this.logger.info('Data Capture Service started successfully');
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Failed to start service: ${error.message}`);
+      this.logger.error('Stack trace:', error.stack);
       process.exit(1);
     }
   }
 
-  ensureLogsDirectory() {
-    const logsDir = path.join(__dirname, '..', 'logs');
-    if (!fs.existsSync(logsDir)) {
-      fs.mkdirSync(logsDir, { recursive: true });
+  private ensureLogsDirectory(): void {
+    const logsDir = join(__dirname, '..', 'logs');
+    if (!existsSync(logsDir)) {
+      mkdirSync(logsDir, { recursive: true });
     }
   }
 
-  startChartGeneration() {
+  private startChartGeneration(): void {
     // Set up periodic chart generation every minute
     this.chartInterval = setInterval(() => {
-      this.chartGenerator.generateAllCharts();
+      this.chartGenerator!.generateAllCharts();
     }, 60000);
     
     this.logger.info('Started periodic chart generation (updates every minute)');
   }
 
-  startConfigWatcher() {
-    const configPath = this.config.configPath;
+  private startConfigWatcher(): void {
+    const configPath = (this.config as any).configPath;
     
     this.logger.info(`Watching config file for changes: ${configPath}`);
     
     // Use fs.watchFile for better cross-platform compatibility
-    this.configWatcher = fs.watchFile(configPath, { interval: 2000 }, (curr, prev) => {
+    this.configWatcher = watchFile(configPath, { interval: 2000 }, (curr, prev) => {
       // Check if file was modified (mtime changed)
       if (curr.mtime > prev.mtime) {
         this.logger.info('Configuration file changed, attempting to reload...');
@@ -84,14 +99,14 @@ class DataCaptureService {
     });
   }
 
-  async reloadConfig() {
+  private async reloadConfig(): Promise<void> {
     const result = this.config.reload();
     
     if (result.success) {
       this.logger.info('Configuration reloaded successfully');
       
       // Reload scheduler with new config
-      this.scheduler.reload(this.config);
+      this.scheduler!.reload(this.config);
       
       // Update chart generator with new config
       this.chartGenerator = new ChartGenerator(this.database, this.config, this.logger);
@@ -104,8 +119,8 @@ class DataCaptureService {
     }
   }
 
-  setupShutdownHandlers() {
-    const shutdown = async (signal) => {
+  private setupShutdownHandlers(): void {
+    const shutdown = async (signal: string) => {
       this.logger.info(`Received ${signal}, shutting down gracefully...`);
       
       if (this.scheduler) {
@@ -121,7 +136,7 @@ class DataCaptureService {
       }
       
       if (this.configWatcher) {
-        fs.unwatchFile(this.config.configPath);
+        unwatchFile((this.config as any).configPath);
       }
       
       if (this.database) {

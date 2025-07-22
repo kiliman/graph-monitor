@@ -1,10 +1,49 @@
-const { ChartJSNodeCanvas } = require('chartjs-node-canvas');
-const fs = require('fs').promises;
-const path = require('path');
-const { format, subHours, subDays } = require('date-fns');
+import { ChartJSNodeCanvas } from 'chartjs-node-canvas';
+import { promises as fs } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { format, subHours, subDays } from 'date-fns';
+import type winston from 'winston';
+import type Database from './database.ts';
+import type ConfigLoader from './config.ts';
+import type { ChartConfiguration } from 'chart.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+interface GraphConfig {
+  metric: string;
+  'y-axis': string;
+  type?: string;
+  limit: string;
+  source: string;
+  aggregation?: string[];
+  [key: string]: any;
+}
+
+interface ChartData {
+  timestamp: number;
+  value?: number;
+  min?: number;
+  max?: number;
+  average?: number;
+  unit?: string;
+  key?: string;
+}
+
+interface GroupedData {
+  [key: string]: Array<{ timestamp: number; value: number }>;
+}
 
 class ChartGenerator {
-  constructor(database, config, logger) {
+  private database: Database;
+  private config: ConfigLoader;
+  private logger: winston.Logger;
+  private width: number;
+  private height: number;
+  private chartJSNodeCanvas: ChartJSNodeCanvas;
+
+  constructor(database: Database, config: ConfigLoader, logger: winston.Logger) {
     this.database = database;
     this.config = config;
     this.logger = logger;
@@ -17,9 +56,9 @@ class ChartGenerator {
     });
   }
 
-  async generateAllCharts(forceRegenerate = false) {
+  async generateAllCharts(forceRegenerate = false): Promise<void> {
     try {
-      const outputDir = path.join(__dirname, '..', 'charts');
+      const outputDir = join(__dirname, '..', 'charts');
       await fs.mkdir(outputDir, { recursive: true });
 
       const graphs = this.config.getGraphs();
@@ -28,7 +67,7 @@ class ChartGenerator {
       
       for (const [title, graphConfig] of Object.entries(graphs)) {
         const filename = this.sanitizeFilename(title) + '.png';
-        const filepath = path.join(outputDir, filename);
+        const filepath = join(outputDir, filename);
         const shouldRegenerate = forceRegenerate || await this.shouldRegenerateChart(filepath, title, graphConfig);
         
         if (shouldRegenerate) {
@@ -42,12 +81,12 @@ class ChartGenerator {
       await this.generateIndexHtml();
       
       this.logger.info(`Chart generation complete: ${regeneratedCount} regenerated, ${skippedCount} skipped`);
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Error generating charts: ${error.message}`);
     }
   }
 
-  async generateChart(title, config) {
+  async generateChart(title: string, config: GraphConfig): Promise<void> {
     try {
       const data = await this.fetchChartData(title, config);
       
@@ -60,25 +99,25 @@ class ChartGenerator {
       const buffer = await this.chartJSNodeCanvas.renderToBuffer(chartConfig);
       
       const filename = this.sanitizeFilename(title) + '.png';
-      const filepath = path.join(__dirname, '..', 'charts', filename);
+      const filepath = join(__dirname, '..', 'charts', filename);
       
       await fs.writeFile(filepath, buffer);
       this.logger.debug(`Generated chart: ${filename}`);
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Error generating chart "${title}": ${error.message}`);
     }
   }
 
-  async fetchChartData(title, config) {
+  private async fetchChartData(title: string, config: GraphConfig): Promise<ChartData[]> {
     const metricKey = config.metric === '*' ? 'all' : config.metric;
     const yAxisName = config['y-axis'];
     const now = Math.floor(Date.now() / 1000);
     const startTime = this.getStartTime(config.limit, now);
     
-    let data;
+    let data: ChartData[] = [];
     if (config.source === 'latest') {
       if (metricKey === 'all') {
-        data = await this.database.all(
+        data = await (this.database as any).all(
           `SELECT timestamp, key, value, unit 
            FROM metrics 
            WHERE name = ? AND timestamp >= ?
@@ -87,7 +126,7 @@ class ChartGenerator {
           [yAxisName, startTime]
         );
       } else {
-        data = await this.database.all(
+        data = await (this.database as any).all(
           `SELECT timestamp, value, unit 
            FROM metrics 
            WHERE key = ? AND name = ? AND timestamp >= ?
@@ -98,7 +137,7 @@ class ChartGenerator {
       }
     } else if (config.source.startsWith('rollup-')) {
       const increment = config.source.replace('rollup-', '');
-      data = await this.database.all(
+      data = await (this.database as any).all(
         `SELECT timestamp, min, max, average, unit
          FROM rollups
          WHERE increment = ? AND key = ? AND name = ? AND timestamp >= ?
@@ -111,17 +150,17 @@ class ChartGenerator {
     return data ? data.reverse() : [];
   }
 
-  createChartConfig(title, config, data) {
+  private createChartConfig(title: string, config: GraphConfig, data: ChartData[]): ChartConfiguration {
     const chartType = this.getChartType(config.type);
     const isAreaChart = config.type === 'AreaChart';
-    const isMultiSeries = data.length > 0 && data[0].key;
+    const isMultiSeries = data.length > 0 && data[0].key !== undefined;
     
     // Generate full time range based on limit
     const now = Math.floor(Date.now() / 1000);
     const startTime = this.getStartTime(config.limit, now);
     const labels = this.generateTimeLabels(startTime, now, config.source);
     
-    let datasets;
+    let datasets: any[];
     
     if (isMultiSeries) {
       // Group data by key for multi-series charts
@@ -143,7 +182,7 @@ class ChartGenerator {
       
       if (hasAggregation) {
         // Create separate datasets for each aggregation type
-        const dataMaps = {
+        const dataMaps: Record<string, Record<number, number>> = {
           min: {},
           max: {},
           average: {}
@@ -159,7 +198,7 @@ class ChartGenerator {
         datasets = [];
         
         // Add datasets for requested aggregations
-        if (config.aggregation.includes('min')) {
+        if (config.aggregation!.includes('min')) {
           const minData = labels.map(label => {
             const ts = this.parseFormattedTimestamp(label);
             return dataMaps.min[ts] !== undefined ? dataMaps.min[ts] : null;
@@ -179,7 +218,7 @@ class ChartGenerator {
           });
         }
         
-        if (config.aggregation.includes('average')) {
+        if (config.aggregation!.includes('average')) {
           const avgData = labels.map(label => {
             const ts = this.parseFormattedTimestamp(label);
             return dataMaps.average[ts] !== undefined ? dataMaps.average[ts] : null;
@@ -198,7 +237,7 @@ class ChartGenerator {
           });
         }
         
-        if (config.aggregation.includes('max')) {
+        if (config.aggregation!.includes('max')) {
           const maxData = labels.map(label => {
             const ts = this.parseFormattedTimestamp(label);
             return dataMaps.max[ts] !== undefined ? dataMaps.max[ts] : null;
@@ -219,10 +258,10 @@ class ChartGenerator {
         }
       } else {
         // Single dataset for non-aggregated data
-        const dataMap = {};
+        const dataMap: Record<number, number> = {};
         data.forEach(d => {
           const ts = d.timestamp;
-          dataMap[ts] = d.average || d.value;
+          dataMap[ts] = d.average !== undefined ? d.average : (d.value !== undefined ? d.value : 0);
         });
         
         const alignedData = labels.map(label => {
@@ -245,7 +284,7 @@ class ChartGenerator {
     }
 
     return {
-      type: chartType,
+      type: chartType as any,
       data: {
         labels,
         datasets
@@ -280,31 +319,33 @@ class ChartGenerator {
     };
   }
 
-  groupDataByKey(data) {
-    const grouped = {};
+  private groupDataByKey(data: ChartData[]): GroupedData {
+    const grouped: GroupedData = {};
     data.forEach(item => {
-      if (!grouped[item.key]) {
-        grouped[item.key] = [];
+      if (item.key) {
+        if (!grouped[item.key]) {
+          grouped[item.key] = [];
+        }
+        grouped[item.key].push({
+          timestamp: item.timestamp,
+          value: item.value || 0
+        });
       }
-      grouped[item.key].push({
-        timestamp: item.timestamp,
-        value: item.value
-      });
     });
     return grouped;
   }
 
 
-  getChartType(type) {
-    const typeMap = {
+  private getChartType(type?: string): string {
+    const typeMap: Record<string, string> = {
       'LineChart': 'line',
       'BarChart': 'bar',
       'AreaChart': 'line'
     };
-    return typeMap[type] || 'line';
+    return typeMap[type || 'LineChart'] || 'line';
   }
 
-  getColor(index, opacity = 1) {
+  private getColor(index: number, opacity = 1): string {
     const colors = [
       [75, 192, 192],
       [255, 99, 132],
@@ -319,7 +360,7 @@ class ChartGenerator {
       : `rgba(${color[0]}, ${color[1]}, ${color[2]}, ${opacity})`;
   }
 
-  formatTimestamp(timestamp) {
+  private formatTimestamp(timestamp: number): string {
     const date = new Date(timestamp * 1000);
     const now = new Date();
     
@@ -330,9 +371,9 @@ class ChartGenerator {
     return format(date, 'MMM dd HH:mm');
   }
 
-  generateTimeLabels(startTime, endTime, source) {
-    const labels = [];
-    let interval;
+  private generateTimeLabels(startTime: number, endTime: number, source: string): string[] {
+    const labels: string[] = [];
+    let interval: number;
     
     if (source === 'latest') {
       interval = 60; // 1 minute
@@ -360,7 +401,7 @@ class ChartGenerator {
     return labels;
   }
 
-  parseFormattedTimestamp(formatted) {
+  private parseFormattedTimestamp(formatted: string): number {
     // This is a simplified reverse of formatTimestamp
     // In production, we'd want a more robust solution
     const now = new Date();
@@ -379,9 +420,14 @@ class ChartGenerator {
     return 0; // Placeholder
   }
 
-  alignDataToFullTimeRange(values, labels, startTime, endTime) {
+  private alignDataToFullTimeRange(
+    values: Array<{ timestamp: number; value: number }>,
+    labels: string[],
+    startTime: number,
+    endTime: number
+  ): (number | null)[] {
     // Create a map for efficient lookup
-    const valueMap = {};
+    const valueMap: Record<number, number> = {};
     values.forEach(v => {
       valueMap[v.timestamp] = v.value;
     });
@@ -399,8 +445,8 @@ class ChartGenerator {
     });
   }
 
-  getStartTime(limit, now) {
-    const units = {
+  private getStartTime(limit: string, now: number): number {
+    const units: Record<string, number> = {
       's': 1,
       'm': 60,
       'h': 3600,
@@ -419,13 +465,13 @@ class ChartGenerator {
   }
 
 
-  sanitizeFilename(title) {
+  private sanitizeFilename(title: string): string {
     return title.toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '');
   }
 
-  async shouldRegenerateChart(filepath, title, config) {
+  private async shouldRegenerateChart(filepath: string, title: string, config: GraphConfig): Promise<boolean> {
     try {
       // Always regenerate "latest" source charts
       if (config.source === 'latest') {
@@ -447,7 +493,7 @@ class ChartGenerator {
       const yAxisName = config['y-axis'];
       
       // Check latest rollup timestamp
-      const latestRollup = await this.database.all(
+      const latestRollup = await (this.database as any).all(
         `SELECT MAX(timestamp) as latest 
          FROM rollups 
          WHERE increment = ? AND key = ? AND name = ?`,
@@ -462,13 +508,13 @@ class ChartGenerator {
       
       // Regenerate if we have data newer than the file
       return latestDataTime >= fileModifiedTime;
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Error checking regeneration for "${title}": ${error.message}`);
       return true; // On error, regenerate to be safe
     }
   }
 
-  async generateIndexHtml() {
+  private async generateIndexHtml(): Promise<void> {
     const graphs = this.config.getGraphs();
     const chartFiles = Object.keys(graphs).map(title => ({
       title,
@@ -536,10 +582,10 @@ ${chartFiles.map(({ filename }) => `      <div class="chart">
 </body>
 </html>`;
 
-    const indexPath = path.join(__dirname, '..', 'charts', 'index.html');
+    const indexPath = join(__dirname, '..', 'charts', 'index.html');
     await fs.writeFile(indexPath, html);
     this.logger.info('Generated index.html');
   }
 }
 
-module.exports = ChartGenerator;
+export default ChartGenerator;
