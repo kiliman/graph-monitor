@@ -14,7 +14,7 @@
       "metric": "bde",
       "source": "latest",
       "limit": "1h",
-      "type": "LineChart",
+      "type": "AreaChart",
       "x-axis": "timestamp",
       "y-axis": "duration"
     },

@@ -113,6 +113,7 @@ class ChartGenerator {
 
   createChartConfig(title, config, data) {
     const chartType = this.getChartType(config.type);
+    const isAreaChart = config.type === 'AreaChart';
     const isMultiSeries = data.length > 0 && data[0].key;
     
     let datasets;
@@ -125,10 +126,11 @@ class ChartGenerator {
       datasets = Object.entries(groupedData).map(([key, values], index) => ({
         label: key,
         data: this.alignDataToLabels(values, labels),
-        backgroundColor: this.getColor(index),
+        backgroundColor: isAreaChart ? this.getColor(index, 0.2) : this.getColor(index),
         borderColor: this.getColor(index),
-        fill: false,
-        tension: 0.1
+        fill: isAreaChart,
+        tension: 0.1,
+        pointRadius: 0
       }));
     } else {
       labels = data.map(d => this.formatTimestamp(d.timestamp));
@@ -136,11 +138,12 @@ class ChartGenerator {
       datasets = [{
         label: config['y-axis'],
         data: values,
-        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+        backgroundColor: isAreaChart ? 'rgba(75, 192, 192, 0.2)' : 'rgba(75, 192, 192, 0.2)',
         borderColor: 'rgb(75, 192, 192)',
         borderWidth: 2,
-        fill: chartType === 'line' ? false : true,
-        tension: 0.1
+        fill: isAreaChart,
+        tension: 0.1,
+        pointRadius: 0
       }];
     }
 
@@ -216,16 +219,19 @@ class ChartGenerator {
     return typeMap[type] || 'line';
   }
 
-  getColor(index) {
+  getColor(index, opacity = 1) {
     const colors = [
-      'rgb(75, 192, 192)',
-      'rgb(255, 99, 132)',
-      'rgb(54, 162, 235)',
-      'rgb(255, 205, 86)',
-      'rgb(153, 102, 255)',
-      'rgb(255, 159, 64)'
+      [75, 192, 192],
+      [255, 99, 132],
+      [54, 162, 235],
+      [255, 205, 86],
+      [153, 102, 255],
+      [255, 159, 64]
     ];
-    return colors[index % colors.length];
+    const color = colors[index % colors.length];
+    return opacity === 1 
+      ? `rgb(${color[0]}, ${color[1]}, ${color[2]})` 
+      : `rgba(${color[0]}, ${color[1]}, ${color[2]}, ${opacity})`;
   }
 
   formatTimestamp(timestamp) {
