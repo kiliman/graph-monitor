@@ -58,7 +58,7 @@ class ChartGenerator {
 
   async generateAllCharts(forceRegenerate = false): Promise<void> {
     try {
-      const outputDir = join(__dirname, '..', 'charts');
+      const outputDir = join(__dirname, '..', 'web', 'charts');
       await fs.mkdir(outputDir, { recursive: true });
 
       const graphs = this.config.getGraphs();
@@ -99,7 +99,7 @@ class ChartGenerator {
       const buffer = await this.chartJSNodeCanvas.renderToBuffer(chartConfig);
       
       const filename = this.sanitizeFilename(title) + '.png';
-      const filepath = join(__dirname, '..', 'charts', filename);
+      const filepath = join(__dirname, '..', 'web', 'charts', filename);
       
       await fs.writeFile(filepath, buffer);
       this.logger.debug(`Generated chart: ${filename}`);
@@ -582,7 +582,7 @@ ${chartFiles.map(({ filename }) => `      <div class="chart">
 </body>
 </html>`;
 
-    const indexPath = join(__dirname, '..', 'charts', 'index.html');
+    const indexPath = join(__dirname, '..', 'web', 'charts', 'index.html');
     await fs.writeFile(indexPath, html);
     this.logger.info('Generated index.html');
   }

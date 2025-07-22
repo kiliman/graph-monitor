@@ -33,7 +33,7 @@ class Database {
   private db: sqlite3.Database | null;
 
   constructor(dbPath?: string) {
-    this.dbPath = dbPath || join(__dirname, '..', 'metrics.db');
+    this.dbPath = dbPath || join(__dirname, '..', 'data', 'metrics.db');
     this.db = null;
   }
 

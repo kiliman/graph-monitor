@@ -10,14 +10,14 @@ Graph Monitor is a system monitoring tool that captures metrics by executing she
 
 The system consists of two main components:
 
-1. **Data Capture Component** (`/data-capture`):
+1. **Data Capture Component** (`/src`):
    - Executes configured shell commands periodically
-   - Stores metrics in SQLite database (`metrics.db`)
+   - Stores metrics in SQLite database (`/data/metrics.db`)
    - Performs automatic data rollups (5m, 30m, 1h, 2h, 4h, 12h, 24h intervals)
    - Generates static PNG charts using Chart.js
 
-2. **Web Server Component** (`serve-charts.js`):
-   - Serves static chart PNG files from `/charts` directory
+2. **Web Server Component** (`/web/serve-charts.ts`):
+   - Serves static chart PNG files from `/web/charts` directory
    - Provides index.html for viewing charts
    - Runs on port 8080
 
@@ -26,7 +26,6 @@ The system consists of two main components:
 ```bash
 # Install dependencies
 npm install
-cd data-capture && npm install
 
 # Run data capture only
 npm run capture
@@ -36,17 +35,20 @@ npm run serve
 
 # Run both components
 npm start
+
+# Run in development mode with file watching
+npm run dev
 ```
 
 ## Important Technical Details
 
 ### Data Flow
-1. `config.js` defines metrics (shell commands) and graph specifications
-2. Scheduler (`scheduler.js`) executes commands based on intervals
-3. Executor (`executor.js`) parses command output for duration and status
-4. Database (`database.js`) stores raw metrics and manages rollups
-5. Chart generator (`chart-generator.js`) creates PNG files from data
-6. HTTP server serves charts from `/charts` directory
+1. `config.json` defines metrics (shell commands) and graph specifications
+2. Scheduler (`src/scheduler.ts`) executes commands based on intervals
+3. Executor (`src/executor.ts`) parses command output for duration and status
+4. Database (`src/database.ts`) stores raw metrics and manages rollups
+5. Chart generator (`src/chartGenerator.ts`) creates PNG files from data
+6. HTTP server serves charts from `/web/charts` directory
 
 ### Database Schema
 - `metrics` table: Raw metric data (id, timestamp, name, value, status)
@@ -58,7 +60,7 @@ The system currently monitors:
 - `google.com` response time
 
 ### Implementation Notes
-- Uses CommonJS modules (not ES modules)
+- Uses TypeScript with ESM modules (requires Node.js v24+ with --experimental-strip-types)
 - Winston logger writes to `/logs` directory
 - No test framework is configured
-- The actual implementation generates static PNG charts, not a React app as originally specified in README.md
+- Generates static PNG charts served by a simple HTTP server
