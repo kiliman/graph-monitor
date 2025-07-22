@@ -16,6 +16,7 @@ class DataCaptureService {
     this.rollupManager = null;
     this.chartGenerator = null;
     this.chartInterval = null;
+    this.configWatcher = null;
   }
 
   async start() {
@@ -39,6 +40,7 @@ class DataCaptureService {
       this.chartGenerator = new ChartGenerator(this.database, this.config, this.logger);
       this.startChartGeneration();
       
+      this.startConfigWatcher();
       this.setupShutdownHandlers();
       
       this.logger.info('Data Capture Service started successfully');
@@ -67,6 +69,40 @@ class DataCaptureService {
     this.logger.info('Started chart generation (updates every minute)');
   }
 
+  startConfigWatcher() {
+    const configPath = this.config.configPath;
+    
+    this.logger.info(`Watching config file for changes: ${configPath}`);
+    
+    // Use fs.watchFile for better cross-platform compatibility
+    this.configWatcher = fs.watchFile(configPath, { interval: 2000 }, (curr, prev) => {
+      // Check if file was modified (mtime changed)
+      if (curr.mtime > prev.mtime) {
+        this.logger.info('Configuration file changed, attempting to reload...');
+        this.reloadConfig();
+      }
+    });
+  }
+
+  reloadConfig() {
+    const result = this.config.reload();
+    
+    if (result.success) {
+      this.logger.info('Configuration reloaded successfully');
+      
+      // Reload scheduler with new config
+      this.scheduler.reload(this.config);
+      
+      // Update chart generator with new config
+      this.chartGenerator = new ChartGenerator(this.database, this.config, this.logger);
+      
+      // Regenerate charts immediately with new config
+      this.chartGenerator.generateAllCharts();
+    } else {
+      this.logger.error(`Configuration reload failed, keeping existing config: ${result.error}`);
+    }
+  }
+
   setupShutdownHandlers() {
     const shutdown = async (signal) => {
       this.logger.info(`Received ${signal}, shutting down gracefully...`);
@@ -81,6 +117,10 @@ class DataCaptureService {
       
       if (this.chartInterval) {
         clearInterval(this.chartInterval);
+      }
+      
+      if (this.configWatcher) {
+        fs.unwatchFile(this.config.configPath);
       }
       
       if (this.database) {

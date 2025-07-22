@@ -1,7 +1,7 @@
 {
   "metrics": {
     "bde": {
-      "command": "curl -o /dev/null -s -w 'duration: %{time_total} s\\nstatus: %{http_code}' https://www.bigdeskenergy.com",
+      "command": "curl -o /dev/null -s -w 'duration: %{time_total} s\\nstatus: %{http_code}' https://mail.bigdeskenergy.com",
       "frequency": "30s"
     },
     "google": {
@@ -10,14 +10,14 @@
     }
   },
   "graphs": {
-    "Response Time: www.bigdeskenergy.com (Last hour)": {
+    "Response Time: mail.bigdeskenergy.com (Last hour)": {
       "source": "latest",
       "limit": "1h",
       "type": "LineChart",
       "x-axis": "timestamp",
       "y-axis": "duration"
     },
-    "Response Time: www.bigdeskenergy.com (Last 24 hours)": {
+    "Response Time: mail.bigdeskenergy.com (Last 24 hours)": {
       "source": "rollup-5m",
       "limit": "24h",
       "type": "LineChart",

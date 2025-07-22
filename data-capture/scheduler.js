@@ -75,6 +75,23 @@ class MetricScheduler {
     }
   }
 
+  reload(newConfig) {
+    this.logger.info('Reloading metric scheduler with new configuration...');
+    
+    // Stop all existing tasks
+    for (const [key, interval] of this.intervals) {
+      clearInterval(interval);
+      this.logger.debug(`Stopped metric collection for "${key}"`);
+    }
+    
+    this.intervals.clear();
+    this.tasks.clear();
+    
+    // Update config and restart with new metrics
+    this.config = newConfig;
+    this.start();
+  }
+
   stop() {
     for (const [key, interval] of this.intervals) {
       clearInterval(interval);
