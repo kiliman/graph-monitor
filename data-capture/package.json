@@ -16,7 +16,6 @@
     "chart.js": "^4.5.0",
     "chartjs-node-canvas": "^5.0.0",
     "date-fns": "^4.1.0",
-    "node-cron": "^4.2.1",
     "sqlite3": "^5.1.7",
     "winston": "^3.17.0"
   },
