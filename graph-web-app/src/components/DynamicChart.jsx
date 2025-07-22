@@ -22,14 +22,15 @@ const chartComponents = {
   AreaChart: { Chart: AreaChart, DataComponent: Area }
 };
 
-export default function DynamicChart({ title, config }) {
+export default function DynamicChart({ title, config, refreshTrigger }) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isInitialRender, setIsInitialRender] = useState(true);
 
   useEffect(() => {
     fetchData();
-  }, [config]);
+  }, [config, refreshTrigger]);
 
   const fetchData = async () => {
     try {
@@ -82,6 +83,11 @@ export default function DynamicChart({ title, config }) {
       }
       
       setData(transformedData);
+      
+      // After first render, disable animations
+      if (isInitialRender) {
+        setTimeout(() => setIsInitialRender(false), 1500);
+      }
     } catch (err) {
       setError(err.message);
       console.error('Error fetching chart data:', err);
@@ -143,6 +149,7 @@ export default function DynamicChart({ title, config }) {
               stroke={colors[index % colors.length]}
               fill={colors[index % colors.length]}
               strokeWidth={2}
+              isAnimationActive={isInitialRender}
             />
           ))}
         </Chart>

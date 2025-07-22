@@ -60,9 +60,10 @@ export default function Dashboard() {
       <div className="charts-grid">
         {Object.entries(graphs).map(([title, graphConfig]) => (
           <DynamicChart
-            key={`${title}-${refreshKey}`}
+            key={title}
             title={title}
             config={graphConfig}
+            refreshTrigger={refreshKey}
           />
         ))}
       </div>
