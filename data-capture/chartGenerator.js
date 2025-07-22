@@ -17,7 +17,7 @@ class ChartGenerator {
     });
   }
 
-  async generateAllCharts() {
+  async generateAllCharts(forceRegenerate = false) {
     try {
       const outputDir = path.join(__dirname, '..', 'charts');
       await fs.mkdir(outputDir, { recursive: true });
@@ -29,7 +29,7 @@ class ChartGenerator {
       for (const [title, graphConfig] of Object.entries(graphs)) {
         const filename = this.sanitizeFilename(title) + '.png';
         const filepath = path.join(outputDir, filename);
-        const shouldRegenerate = await this.shouldRegenerateChart(filepath, title, graphConfig);
+        const shouldRegenerate = forceRegenerate || await this.shouldRegenerateChart(filepath, title, graphConfig);
         
         if (shouldRegenerate) {
           await this.generateChart(title, graphConfig);

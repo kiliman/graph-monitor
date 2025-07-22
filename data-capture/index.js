@@ -38,8 +38,11 @@ class DataCaptureService {
       this.scheduler.start();
       
       this.chartGenerator = new ChartGenerator(this.database, this.config, this.logger);
-      this.startChartGeneration();
       
+      // Generate all charts immediately on startup (force regenerate)
+      await this.chartGenerator.generateAllCharts(true);
+      
+      this.startChartGeneration();
       this.startConfigWatcher();
       this.setupShutdownHandlers();
       
@@ -58,15 +61,12 @@ class DataCaptureService {
   }
 
   startChartGeneration() {
-    // Generate charts immediately
-    this.chartGenerator.generateAllCharts();
-    
-    // Then generate every minute
+    // Set up periodic chart generation every minute
     this.chartInterval = setInterval(() => {
       this.chartGenerator.generateAllCharts();
     }, 60000);
     
-    this.logger.info('Started chart generation (updates every minute)');
+    this.logger.info('Started periodic chart generation (updates every minute)');
   }
 
   startConfigWatcher() {
@@ -84,7 +84,7 @@ class DataCaptureService {
     });
   }
 
-  reloadConfig() {
+  async reloadConfig() {
     const result = this.config.reload();
     
     if (result.success) {
@@ -96,8 +96,9 @@ class DataCaptureService {
       // Update chart generator with new config
       this.chartGenerator = new ChartGenerator(this.database, this.config, this.logger);
       
-      // Regenerate charts immediately with new config
-      this.chartGenerator.generateAllCharts();
+      // Regenerate all charts immediately with new config (force regenerate)
+      this.logger.info('Regenerating all charts with new configuration...');
+      await this.chartGenerator.generateAllCharts(true);
     } else {
       this.logger.error(`Configuration reload failed, keeping existing config: ${result.error}`);
     }
