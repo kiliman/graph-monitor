@@ -8,45 +8,40 @@ class MetricScheduler {
     this.logger = logger;
     this.rollupManager = rollupManager;
     this.executor = new CommandExecutor(logger);
-    this.tasks = new Map();
-    this.intervals = new Map();
+    this.mainInterval = null;
   }
 
   start() {
     const metrics = this.config.getMetrics();
-    
-    for (const [key, metric] of Object.entries(metrics)) {
-      this.scheduleMetric(key, metric);
-    }
-    
-    this.logger.info(`Started ${this.tasks.size} metric collection tasks`);
+
+    // Execute all metrics immediately
+    this.executeAllMetrics();
+
+    // Then run every minute
+    this.mainInterval = setInterval(() => {
+      this.executeAllMetrics();
+    }, 60000);
+
+    this.logger.info(`Started metric collection - running all metrics every minute`);
   }
 
-  scheduleMetric(key, metric) {
-    const frequencyMs = this.config.parseFrequency(metric.frequency);
-    
-    if (!frequencyMs) {
-      this.logger.error(`Invalid frequency for metric ${key}: ${metric.frequency}`);
-      return;
-    }
+  async executeAllMetrics() {
+    const metrics = this.config.getMetrics();
 
-    this.executeMetric(key, metric);
-    
-    const interval = setInterval(() => {
+    for (const [key, metric] of Object.entries(metrics)) {
       this.executeMetric(key, metric);
-    }, frequencyMs);
-    
-    this.intervals.set(key, interval);
-    this.logger.info(`Scheduled metric "${key}" to run every ${metric.frequency}`);
+    }
   }
 
   async executeMetric(key, metric) {
     try {
       this.logger.debug(`Executing metric "${key}": ${metric.command}`);
-      
+
       const result = await this.executor.execute(metric.command);
-      const timestamp = Math.floor(Date.now() / 1000);
-      
+      // Round timestamp to nearest minute
+      const now = Date.now() / 1000;
+      const timestamp = Math.round(now / 60) * 60;
+
       if (result.success) {
         const storedMetrics = [];
         for (const m of result.metrics) {
@@ -59,9 +54,9 @@ class MetricScheduler {
           );
           storedMetrics.push({ key, name: m.name });
         }
-        
+
         this.logger.debug(`Stored ${result.metrics.length} metrics for "${key}"`);
-        
+
         // Calculate rollups for the metrics we just stored
         if (this.rollupManager) {
           await this.rollupManager.calculateRollupsForMetrics(storedMetrics);
@@ -76,30 +71,23 @@ class MetricScheduler {
 
   reload(newConfig) {
     this.logger.info('Reloading metric scheduler with new configuration...');
-    
-    // Stop all existing tasks
-    for (const [key, interval] of this.intervals) {
-      clearInterval(interval);
-      this.logger.debug(`Stopped metric collection for "${key}"`);
+
+    // Stop the main interval
+    if (this.mainInterval) {
+      clearInterval(this.mainInterval);
     }
-    
-    this.intervals.clear();
-    this.tasks.clear();
-    
-    // Update config and restart with new metrics
+
+    // Update config and restart
     this.config = newConfig;
     this.start();
   }
 
   stop() {
-    for (const [key, interval] of this.intervals) {
-      clearInterval(interval);
-      this.logger.debug(`Stopped metric collection for "${key}"`);
+    if (this.mainInterval) {
+      clearInterval(this.mainInterval);
     }
-    
-    this.intervals.clear();
-    this.tasks.clear();
-    this.logger.info('Stopped all metric collection tasks');
+
+    this.logger.info('Stopped metric collection');
   }
 }
 

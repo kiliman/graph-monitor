@@ -239,7 +239,7 @@ class ChartGenerator {
     const now = new Date();
     
     if (date.toDateString() === now.toDateString()) {
-      return format(date, 'HH:mm:ss');
+      return format(date, 'HH:mm');
     }
     
     return format(date, 'MMM dd HH:mm');

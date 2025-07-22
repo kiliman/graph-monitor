@@ -57,12 +57,6 @@ class ConfigLoader {
       if (!metric.command || typeof metric.command !== 'string') {
         throw new Error(`Metric "${key}" must have a "command" string`);
       }
-      if (!metric.frequency || typeof metric.frequency !== 'string') {
-        throw new Error(`Metric "${key}" must have a "frequency" string`);
-      }
-      if (!this.isValidFrequency(metric.frequency)) {
-        throw new Error(`Invalid frequency format for metric "${key}": ${metric.frequency}`);
-      }
     }
 
     // Validate graphs if present
@@ -82,26 +76,6 @@ class ConfigLoader {
     }
   }
 
-  isValidFrequency(frequency) {
-    const pattern = /^\d+[smh]$/;
-    return pattern.test(frequency);
-  }
-
-  parseFrequency(frequency) {
-    const match = frequency.match(/^(\d+)([smh])$/);
-    if (!match) return null;
-
-    const value = parseInt(match[1], 10);
-    const unit = match[2];
-
-    const multipliers = {
-      's': 1000,
-      'm': 60 * 1000,
-      'h': 60 * 60 * 1000
-    };
-
-    return value * multipliers[unit];
-  }
 
   getMetrics() {
     if (!this.config) {

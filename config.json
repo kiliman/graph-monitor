@@ -1,12 +1,10 @@
 {
   "metrics": {
     "bde": {
-      "command": "curl -o /dev/null -s -w 'duration: %{time_total} s\\nstatus: %{http_code}' https://mail.bigdeskenergy.com",
-      "frequency": "30s"
+      "command": "curl -o /dev/null -s -w 'duration: %{time_total} s\\nstatus: %{http_code}' https://mail.bigdeskenergy.com"
     },
     "google": {
-      "command": "curl -o /dev/null -s -w 'duration: %{time_total} s\\nstatus: %{http_code}' https://www.google.com",
-      "frequency": "1m"
+      "command": "curl -o /dev/null -s -w 'duration: %{time_total} s\\nstatus: %{http_code}' https://www.google.com"
     }
   },
   "graphs": {
@@ -22,7 +20,7 @@
       "metric": "bde",
       "source": "rollup-5m",
       "limit": "24h",
-      "type": "LineChart",
+      "type": "AreaChart",
       "x-axis": "timestamp",
       "y-axis": "duration"
     },

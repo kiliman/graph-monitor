@@ -33,7 +33,8 @@ class Database {
         key TEXT NOT NULL,
         name TEXT NOT NULL,
         value REAL NOT NULL,
-        unit TEXT
+        unit TEXT,
+        UNIQUE(timestamp, key, name)
       )
     `;
 
@@ -73,7 +74,7 @@ class Database {
 
   async insertMetric(timestamp, key, name, value, unit) {
     const sql = `
-      INSERT INTO metrics (timestamp, key, name, value, unit)
+      INSERT OR REPLACE INTO metrics (timestamp, key, name, value, unit)
       VALUES (?, ?, ?, ?, ?)
     `;
     return this.run(sql, [timestamp, key, name, value, unit]);
