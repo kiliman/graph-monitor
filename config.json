@@ -22,7 +22,8 @@
       "limit": "6h",
       "type": "AreaChart",
       "x-axis": "timestamp",
-      "y-axis": "duration"
+      "y-axis": "duration",
+      "aggregation": ["min", "max", "average"]
     },
     "Response Time: mail.bigdeskenergy.com (Last 24 hours)": {
       "metric": "bde",
@@ -30,7 +31,8 @@
       "limit": "24h",
       "type": "AreaChart",
       "x-axis": "timestamp",
-      "y-axis": "duration"
+      "y-axis": "duration",
+      "aggregation": ["min", "max", "average"]
     }
   }
 }
