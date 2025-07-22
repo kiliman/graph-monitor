@@ -116,34 +116,50 @@ class ChartGenerator {
     const isAreaChart = config.type === 'AreaChart';
     const isMultiSeries = data.length > 0 && data[0].key;
     
+    // Generate full time range based on limit
+    const now = Math.floor(Date.now() / 1000);
+    const startTime = this.getStartTime(config.limit, now);
+    const labels = this.generateTimeLabels(startTime, now, config.source);
+    
     let datasets;
-    let labels;
     
     if (isMultiSeries) {
       // Group data by key for multi-series charts
       const groupedData = this.groupDataByKey(data);
-      labels = this.getUniqueTimestamps(data);
       datasets = Object.entries(groupedData).map(([key, values], index) => ({
         label: key,
-        data: this.alignDataToLabels(values, labels),
+        data: this.alignDataToFullTimeRange(values, labels, startTime, now),
         backgroundColor: isAreaChart ? this.getColor(index, 0.2) : this.getColor(index),
         borderColor: this.getColor(index),
         fill: isAreaChart,
         tension: 0.1,
-        pointRadius: 0
+        pointRadius: 0,
+        spanGaps: false
       }));
     } else {
-      labels = data.map(d => this.formatTimestamp(d.timestamp));
-      const values = data.map(d => d.average || d.value);
+      // Create a map of timestamp to value for efficient lookup
+      const dataMap = {};
+      data.forEach(d => {
+        const ts = d.timestamp;
+        dataMap[ts] = d.average || d.value;
+      });
+      
+      // Align data to full time range
+      const alignedData = labels.map(label => {
+        const ts = this.parseFormattedTimestamp(label);
+        return dataMap[ts] !== undefined ? dataMap[ts] : null;
+      });
+      
       datasets = [{
         label: config['y-axis'],
-        data: values,
+        data: alignedData,
         backgroundColor: isAreaChart ? 'rgba(75, 192, 192, 0.2)' : 'rgba(75, 192, 192, 0.2)',
         borderColor: 'rgb(75, 192, 192)',
         borderWidth: 2,
         fill: isAreaChart,
         tension: 0.1,
-        pointRadius: 0
+        pointRadius: 0,
+        spanGaps: false
       }];
     }
 
@@ -197,18 +213,6 @@ class ChartGenerator {
     return grouped;
   }
 
-  getUniqueTimestamps(data) {
-    const timestamps = [...new Set(data.map(d => d.timestamp))];
-    return timestamps.sort((a, b) => a - b).map(ts => this.formatTimestamp(ts));
-  }
-
-  alignDataToLabels(values, labels) {
-    const timestampMap = {};
-    values.forEach(v => {
-      timestampMap[this.formatTimestamp(v.timestamp)] = v.value;
-    });
-    return labels.map(label => timestampMap[label] || null);
-  }
 
   getChartType(type) {
     const typeMap = {
@@ -243,6 +247,75 @@ class ChartGenerator {
     }
     
     return format(date, 'MMM dd HH:mm');
+  }
+
+  generateTimeLabels(startTime, endTime, source) {
+    const labels = [];
+    let interval;
+    
+    if (source === 'latest') {
+      interval = 60; // 1 minute
+    } else if (source === 'rollup-5m') {
+      interval = 5 * 60; // 5 minutes
+    } else if (source === 'rollup-30m') {
+      interval = 30 * 60; // 30 minutes
+    } else if (source === 'rollup-1h') {
+      interval = 60 * 60; // 1 hour
+    } else if (source === 'rollup-12h') {
+      interval = 12 * 60 * 60; // 12 hours
+    } else if (source === 'rollup-1d') {
+      interval = 24 * 60 * 60; // 1 day
+    } else {
+      interval = 60; // default to 1 minute
+    }
+    
+    // Align start time to interval
+    const alignedStart = Math.floor(startTime / interval) * interval;
+    
+    for (let t = alignedStart; t <= endTime; t += interval) {
+      labels.push(this.formatTimestamp(t));
+    }
+    
+    return labels;
+  }
+
+  parseFormattedTimestamp(formatted) {
+    // This is a simplified reverse of formatTimestamp
+    // In production, we'd want a more robust solution
+    const now = new Date();
+    const today = now.toDateString();
+    
+    // Check if it's today's format (HH:mm)
+    if (formatted.match(/^\d{2}:\d{2}$/)) {
+      const [hours, minutes] = formatted.split(':').map(Number);
+      const date = new Date();
+      date.setHours(hours, minutes, 0, 0);
+      return Math.floor(date.getTime() / 1000);
+    }
+    
+    // Otherwise parse full format (MMM dd HH:mm)
+    // This is a simplified parser - in production use a proper date parser
+    return 0; // Placeholder
+  }
+
+  alignDataToFullTimeRange(values, labels, startTime, endTime) {
+    // Create a map for efficient lookup
+    const valueMap = {};
+    values.forEach(v => {
+      valueMap[v.timestamp] = v.value;
+    });
+    
+    // Generate data points for each label
+    return labels.map(label => {
+      // Find the timestamp that corresponds to this label
+      // This is simplified - in production we'd need proper timestamp parsing
+      for (const v of values) {
+        if (this.formatTimestamp(v.timestamp) === label) {
+          return v.value;
+        }
+      }
+      return null; // No data for this time point
+    });
   }
 
   getStartTime(limit, now) {

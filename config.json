@@ -23,14 +23,6 @@
       "type": "AreaChart",
       "x-axis": "timestamp",
       "y-axis": "duration"
-    },
-    "Status Codes: All Sites (Last hour)": {
-      "metric": "*",
-      "source": "latest",
-      "limit": "1h",
-      "type": "BarChart",
-      "x-axis": "timestamp",
-      "y-axis": "status"
     }
   }
 }
