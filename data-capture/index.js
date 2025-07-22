@@ -30,11 +30,11 @@ class DataCaptureService {
       this.logger.info('Initializing database...');
       await this.database.initialize();
       
-      this.scheduler = new MetricScheduler(this.config, this.database, this.logger);
-      this.scheduler.start();
-      
       this.rollupManager = new RollupManager(this.database, this.logger);
       this.rollupManager.start();
+      
+      this.scheduler = new MetricScheduler(this.config, this.database, this.logger, this.rollupManager);
+      this.scheduler.start();
       
       this.chartGenerator = new ChartGenerator(this.database, this.config, this.logger);
       this.startChartGeneration();

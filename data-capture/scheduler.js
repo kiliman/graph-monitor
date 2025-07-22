@@ -3,10 +3,11 @@ const CommandExecutor = require('./executor');
 const Database = require('./database');
 
 class MetricScheduler {
-  constructor(config, database, logger) {
+  constructor(config, database, logger, rollupManager) {
     this.config = config;
     this.database = database;
     this.logger = logger;
+    this.rollupManager = rollupManager;
     this.executor = new CommandExecutor(logger);
     this.tasks = new Map();
     this.intervals = new Map();
@@ -48,6 +49,7 @@ class MetricScheduler {
       const timestamp = Math.floor(Date.now() / 1000);
       
       if (result.success) {
+        const storedMetrics = [];
         for (const m of result.metrics) {
           await this.database.insertMetric(
             timestamp,
@@ -56,9 +58,15 @@ class MetricScheduler {
             m.value,
             m.unit
           );
+          storedMetrics.push({ key, name: m.name });
         }
         
         this.logger.debug(`Stored ${result.metrics.length} metrics for "${key}"`);
+        
+        // Calculate rollups for the metrics we just stored
+        if (this.rollupManager) {
+          await this.rollupManager.calculateRollupsForMetrics(storedMetrics);
+        }
       } else {
         this.logger.error(`Failed to execute metric "${key}": ${result.error}`);
       }
