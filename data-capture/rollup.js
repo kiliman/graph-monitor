@@ -3,13 +3,14 @@ class RollupManager {
     this.database = database;
     this.logger = logger;
     
+    // Define rollup hierarchy - each level uses the previous as source
     this.rollupIntervals = [
-      { key: '5m', ms: 5 * 60 * 1000, seconds: 5 * 60 },
-      { key: '30m', ms: 30 * 60 * 1000, seconds: 30 * 60 },
-      { key: '1h', ms: 60 * 60 * 1000, seconds: 60 * 60 },
-      { key: '12h', ms: 12 * 60 * 60 * 1000, seconds: 12 * 60 * 60 },
-      { key: '1d', ms: 24 * 60 * 60 * 1000, seconds: 24 * 60 * 60 },
-      { key: '1mo', ms: 30 * 24 * 60 * 60 * 1000, seconds: 30 * 24 * 60 * 60 }
+      { key: '5m', seconds: 5 * 60, source: 'metrics', maxEntries: 120 },
+      { key: '30m', seconds: 30 * 60, source: '5m', maxEntries: 120 },
+      { key: '1h', seconds: 60 * 60, source: '30m', maxEntries: 120 },
+      { key: '12h', seconds: 12 * 60 * 60, source: '1h', maxEntries: 120 },
+      { key: '1d', seconds: 24 * 60 * 60, source: '12h', maxEntries: 120 },
+      { key: '1mo', seconds: 30 * 24 * 60 * 60, source: '1d', maxEntries: 120 }
     ];
   }
 
@@ -44,22 +45,50 @@ class RollupManager {
     const startTime = alignedTimestamp;
     const endTime = alignedTimestamp + interval.seconds;
     
-    // Get metrics for this interval
-    const metrics = await this.database.getMetricsForRollup(key, name, startTime, endTime);
+    let data, unit;
     
-    if (metrics.length === 0) return;
-    
-    const values = metrics.map(m => m.value);
-    const min = Math.min(...values);
-    const max = Math.max(...values);
-    const average = values.reduce((a, b) => a + b, 0) / values.length;
-    
-    // Get unit from first metric
-    const firstMetric = await this.database.all(
-      'SELECT unit FROM metrics WHERE key = ? AND name = ? LIMIT 1',
-      [key, name]
-    );
-    const unit = firstMetric[0]?.unit || null;
+    if (interval.source === 'metrics') {
+      // First level uses raw metrics
+      const metrics = await this.database.getMetricsForRollup(key, name, startTime, endTime);
+      if (metrics.length === 0) return;
+      
+      const values = metrics.map(m => m.value);
+      const min = Math.min(...values);
+      const max = Math.max(...values);
+      const average = values.reduce((a, b) => a + b, 0) / values.length;
+      
+      // Get unit from metrics
+      const firstMetric = await this.database.all(
+        'SELECT unit FROM metrics WHERE key = ? AND name = ? LIMIT 1',
+        [key, name]
+      );
+      unit = firstMetric[0]?.unit || null;
+      
+      data = { min, max, average };
+    } else {
+      // Higher levels use previous rollup level
+      const sourceData = await this.database.all(
+        `SELECT min, max, average, unit 
+         FROM rollups 
+         WHERE increment = ? AND key = ? AND name = ? 
+         AND timestamp >= ? AND timestamp < ?`,
+        [interval.source, key, name, startTime, endTime]
+      );
+      
+      if (sourceData.length === 0) return;
+      
+      // Aggregate from source rollups
+      const mins = sourceData.map(d => d.min);
+      const maxs = sourceData.map(d => d.max);
+      const averages = sourceData.map(d => d.average);
+      
+      const min = Math.min(...mins);
+      const max = Math.max(...maxs);
+      const average = averages.reduce((a, b) => a + b, 0) / averages.length;
+      
+      unit = sourceData[0]?.unit || null;
+      data = { min, max, average };
+    }
     
     // Insert or update the rollup
     await this.database.insertRollup(
@@ -68,13 +97,33 @@ class RollupManager {
       key,
       name,
       unit,
-      min,
-      max,
-      average
+      data.min,
+      data.max,
+      data.average
     );
     
-    // Cleanup old rollups
-    await this.database.cleanupOldRollups(interval.key, key, name);
+    // Cleanup old data
+    await this.cleanupOldData(interval, key, name, currentTime);
+  }
+
+  async cleanupOldData(interval, key, name, currentTime) {
+    // Calculate cutoff time based on max entries
+    const cutoffTime = currentTime - (interval.maxEntries * interval.seconds);
+    
+    if (interval.source === 'metrics') {
+      // For 5m rollup, clean up raw metrics older than 1 hour
+      const metricsKeepTime = currentTime - (60 * 60); // Keep last hour
+      await this.database.all(
+        'DELETE FROM metrics WHERE key = ? AND name = ? AND timestamp < ?',
+        [key, name, metricsKeepTime]
+      );
+    }
+    
+    // Clean up old rollups for this interval
+    await this.database.all(
+      'DELETE FROM rollups WHERE increment = ? AND key = ? AND name = ? AND timestamp < ?',
+      [interval.key, key, name, cutoffTime]
+    );
   }
 
   alignTimestamp(timestamp, intervalSeconds) {
