@@ -2,6 +2,7 @@ const ConfigLoader = require('./config');
 const Database = require('./database');
 const MetricScheduler = require('./scheduler');
 const RollupManager = require('./rollup');
+const ChartGenerator = require('./chartGenerator');
 const createLogger = require('./logger');
 const fs = require('fs');
 const path = require('path');
@@ -13,6 +14,8 @@ class DataCaptureService {
     this.database = new Database();
     this.scheduler = null;
     this.rollupManager = null;
+    this.chartGenerator = null;
+    this.chartInterval = null;
   }
 
   async start() {
@@ -33,6 +36,9 @@ class DataCaptureService {
       this.rollupManager = new RollupManager(this.database, this.logger);
       this.rollupManager.start();
       
+      this.chartGenerator = new ChartGenerator(this.database, this.config, this.logger);
+      this.startChartGeneration();
+      
       this.setupShutdownHandlers();
       
       this.logger.info('Data Capture Service started successfully');
@@ -49,6 +55,18 @@ class DataCaptureService {
     }
   }
 
+  startChartGeneration() {
+    // Generate charts immediately
+    this.chartGenerator.generateAllCharts();
+    
+    // Then generate every minute
+    this.chartInterval = setInterval(() => {
+      this.chartGenerator.generateAllCharts();
+    }, 60000);
+    
+    this.logger.info('Started chart generation (updates every minute)');
+  }
+
   setupShutdownHandlers() {
     const shutdown = async (signal) => {
       this.logger.info(`Received ${signal}, shutting down gracefully...`);
@@ -59,6 +77,10 @@ class DataCaptureService {
       
       if (this.rollupManager) {
         this.rollupManager.stop();
+      }
+      
+      if (this.chartInterval) {
+        clearInterval(this.chartInterval);
       }
       
       if (this.database) {

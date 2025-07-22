@@ -4,3 +4,4 @@ logs
 *.db
 node_modules
 dist
+charts/
