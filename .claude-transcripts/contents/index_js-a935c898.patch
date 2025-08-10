@@ -1,0 +1,23 @@
+diff --git a/Users/michael/Projects/oss/graph-monitor/data-capture/index.js b/Users/michael/Projects/oss/graph-monitor/data-capture/index.js
+index 1234567..abcdefg 100644
+--- a/Users/michael/Projects/oss/graph-monitor/data-capture/index.js
++++ b/Users/michael/Projects/oss/graph-monitor/data-capture/index.js
+@@ -55,6 +55,18 @@
+     }
+   }
+ 
++  startChartGeneration() {
++    // Generate charts immediately
++    this.chartGenerator.generateAllCharts();
++    
++    // Then generate every minute
++    this.chartInterval = setInterval(() => {
++      this.chartGenerator.generateAllCharts();
++    }, 60000);
++    
++    this.logger.info('Started chart generation (updates every minute)');
++  }
++
+   setupShutdownHandlers() {
+     const shutdown = async (signal) => {
+       this.logger.info(`Received ${signal}, shutting down gracefully...`);

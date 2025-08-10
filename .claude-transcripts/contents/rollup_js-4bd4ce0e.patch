@@ -1,0 +1,90 @@
+diff --git a/Users/michael/Projects/oss/graph-monitor/data-capture/rollup.js b/Users/michael/Projects/oss/graph-monitor/data-capture/rollup.js
+index 1234567..abcdefg 100644
+--- a/Users/michael/Projects/oss/graph-monitor/data-capture/rollup.js
++++ b/Users/michael/Projects/oss/graph-monitor/data-capture/rollup.js
+@@ -45,23 +45,51 @@
+     const startTime = alignedTimestamp;
+     const endTime = alignedTimestamp + interval.seconds;
+     
+-    // Get metrics for this interval
+-    const metrics = await this.database.getMetricsForRollup(key, name, startTime, endTime);
++    let data, unit;
+     
+-    if (metrics.length === 0) return;
++    if (interval.source === 'metrics') {
++      // First level uses raw metrics
++      const metrics = await this.database.getMetricsForRollup(key, name, startTime, endTime);
++      if (metrics.length === 0) return;
++      
++      const values = metrics.map(m => m.value);
++      const min = Math.min(...values);
++      const max = Math.max(...values);
++      const average = values.reduce((a, b) => a + b, 0) / values.length;
++      
++      // Get unit from metrics
++      const firstMetric = await this.database.all(
++        'SELECT unit FROM metrics WHERE key = ? AND name = ? LIMIT 1',
++        [key, name]
++      );
++      unit = firstMetric[0]?.unit || null;
++      
++      data = { min, max, average };
++    } else {
++      // Higher levels use previous rollup level
++      const sourceData = await this.database.all(
++        `SELECT min, max, average, unit 
++         FROM rollups 
++         WHERE increment = ? AND key = ? AND name = ? 
++         AND timestamp >= ? AND timestamp < ?`,
++        [interval.source, key, name, startTime, endTime]
++      );
++      
++      if (sourceData.length === 0) return;
++      
++      // Aggregate from source rollups
++      const mins = sourceData.map(d => d.min);
++      const maxs = sourceData.map(d => d.max);
++      const averages = sourceData.map(d => d.average);
++      
++      const min = Math.min(...mins);
++      const max = Math.max(...maxs);
++      const average = averages.reduce((a, b) => a + b, 0) / averages.length;
++      
++      unit = sourceData[0]?.unit || null;
++      data = { min, max, average };
++    }
+     
+-    const values = metrics.map(m => m.value);
+-    const min = Math.min(...values);
+-    const max = Math.max(...values);
+-    const average = values.reduce((a, b) => a + b, 0) / values.length;
+-    
+-    // Get unit from first metric
+-    const firstMetric = await this.database.all(
+-      'SELECT unit FROM metrics WHERE key = ? AND name = ? LIMIT 1',
+-      [key, name]
+-    );
+-    const unit = firstMetric[0]?.unit || null;
+-    
+     // Insert or update the rollup
+     await this.database.insertRollup(
+       interval.key,
+@@ -69,13 +97,13 @@
+       key,
+       name,
+       unit,
+-      min,
+-      max,
+-      average
++      data.min,
++      data.max,
++      data.average
+     );
+     
+-    // Cleanup old rollups
+-    await this.database.cleanupOldRollups(interval.key, key, name);
++    // Cleanup old data
++    await this.cleanupOldData(interval, key, name, currentTime);
+   }
+ 
+   alignTimestamp(timestamp, intervalSeconds) {

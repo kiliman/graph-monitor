@@ -1,0 +1,24 @@
+diff --git a/Users/michael/Projects/oss/graph-monitor/data-capture/chartGenerator.js b/Users/michael/Projects/oss/graph-monitor/data-capture/chartGenerator.js
+index 1234567..abcdefg 100644
+--- a/Users/michael/Projects/oss/graph-monitor/data-capture/chartGenerator.js
++++ b/Users/michael/Projects/oss/graph-monitor/data-capture/chartGenerator.js
+@@ -258,19 +258,6 @@
+     return now - (value * units[unit]);
+   }
+ 
+-  extractMetricKey(title) {
+-    const matches = title.match(/:\s*([^(]+)/);
+-    if (matches && matches[1]) {
+-      const domain = matches[1].trim();
+-      
+-      if (domain.includes('bigdeskenergy')) return 'bde';
+-      if (domain.includes('google')) return 'google';
+-      if (domain.toLowerCase().includes('all sites')) return 'all';
+-      
+-      return domain.toLowerCase().replace(/[^a-z0-9]/g, '');
+-    }
+-    return null;
+-  }
+ 
+   sanitizeFilename(title) {
+     return title.toLowerCase()

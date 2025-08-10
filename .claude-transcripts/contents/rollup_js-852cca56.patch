@@ -1,0 +1,59 @@
+diff --git a/Users/michael/Projects/oss/graph-monitor/data-capture/rollup.js b/Users/michael/Projects/oss/graph-monitor/data-capture/rollup.js
+index 1234567..abcdefg 100644
+--- a/Users/michael/Projects/oss/graph-monitor/data-capture/rollup.js
++++ b/Users/michael/Projects/oss/graph-monitor/data-capture/rollup.js
+@@ -77,53 +77,12 @@
+     await this.database.cleanupOldRollups(interval.key, key, name);
+   }
+ 
+-  async calculateAndStoreRollup(interval, key, name, startTime, endTime) {
+-    try {
+-      const metrics = await this.database.getMetricsForRollup(key, name, startTime, endTime);
+-      
+-      if (metrics.length === 0) return;
+-      
+-      const values = metrics.map(m => m.value);
+-      const min = Math.min(...values);
+-      const max = Math.max(...values);
+-      const average = values.reduce((a, b) => a + b, 0) / values.length;
+-      
+-      const firstMetric = await this.database.all(
+-        'SELECT unit FROM metrics WHERE key = ? AND name = ? LIMIT 1',
+-        [key, name]
+-      );
+-      const unit = firstMetric[0]?.unit || null;
+-      
+-      await this.database.insertRollup(
+-        interval.key,
+-        endTime,
+-        key,
+-        name,
+-        unit,
+-        min,
+-        max,
+-        average
+-      );
+-      
+-      await this.database.cleanupOldRollups(interval.key, key, name);
+-      
+-    } catch (error) {
+-      this.logger.error(`Error calculating rollup for ${key}/${name}: ${error.message}`);
+-    }
+-  }
+-
+   alignTimestamp(timestamp, intervalSeconds) {
+     return Math.floor(timestamp / intervalSeconds) * intervalSeconds;
+   }
+ 
+   stop() {
+-    for (const [key, interval] of this.intervals) {
+-      clearInterval(interval);
+-      this.logger.debug(`Stopped rollup for ${key}`);
+-    }
+-    
+-    this.intervals.clear();
+-    this.logger.info('Stopped all rollup tasks');
++    this.logger.info('Rollup manager stopped');
+   }
+ }
+ 

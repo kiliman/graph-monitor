@@ -1,0 +1,63 @@
+diff --git a/Users/michael/Projects/oss/graph-monitor/data-capture/chartGenerator.js b/Users/michael/Projects/oss/graph-monitor/data-capture/chartGenerator.js
+index 1234567..abcdefg 100644
+--- a/Users/michael/Projects/oss/graph-monitor/data-capture/chartGenerator.js
++++ b/Users/michael/Projects/oss/graph-monitor/data-capture/chartGenerator.js
+@@ -116,34 +116,50 @@
+     const isAreaChart = config.type === 'AreaChart';
+     const isMultiSeries = data.length > 0 && data[0].key;
+     
++    // Generate full time range based on limit
++    const now = Math.floor(Date.now() / 1000);
++    const startTime = this.getStartTime(config.limit, now);
++    const labels = this.generateTimeLabels(startTime, now, config.source);
++    
+     let datasets;
+-    let labels;
+     
+     if (isMultiSeries) {
+       // Group data by key for multi-series charts
+       const groupedData = this.groupDataByKey(data);
+-      labels = this.getUniqueTimestamps(data);
+       datasets = Object.entries(groupedData).map(([key, values], index) => ({
+         label: key,
+-        data: this.alignDataToLabels(values, labels),
++        data: this.alignDataToFullTimeRange(values, labels, startTime, now),
+         backgroundColor: isAreaChart ? this.getColor(index, 0.2) : this.getColor(index),
+         borderColor: this.getColor(index),
+         fill: isAreaChart,
+         tension: 0.1,
+-        pointRadius: 0
++        pointRadius: 0,
++        spanGaps: false
+       }));
+     } else {
+-      labels = data.map(d => this.formatTimestamp(d.timestamp));
+-      const values = data.map(d => d.average || d.value);
++      // Create a map of timestamp to value for efficient lookup
++      const dataMap = {};
++      data.forEach(d => {
++        const ts = d.timestamp;
++        dataMap[ts] = d.average || d.value;
++      });
++      
++      // Align data to full time range
++      const alignedData = labels.map(label => {
++        const ts = this.parseFormattedTimestamp(label);
++        return dataMap[ts] !== undefined ? dataMap[ts] : null;
++      });
++      
+       datasets = [{
+         label: config['y-axis'],
+-        data: values,
++        data: alignedData,
+         backgroundColor: isAreaChart ? 'rgba(75, 192, 192, 0.2)' : 'rgba(75, 192, 192, 0.2)',
+         borderColor: 'rgb(75, 192, 192)',
+         borderWidth: 2,
+         fill: isAreaChart,
+         tension: 0.1,
+-        pointRadius: 0
++        pointRadius: 0,
++        spanGaps: false
+       }];
+     }
+ 

@@ -1,0 +1,25 @@
+diff --git a/Users/michael/Projects/oss/graph-monitor/data-capture/rollup.js b/Users/michael/Projects/oss/graph-monitor/data-capture/rollup.js
+index 1234567..abcdefg 100644
+--- a/Users/michael/Projects/oss/graph-monitor/data-capture/rollup.js
++++ b/Users/michael/Projects/oss/graph-monitor/data-capture/rollup.js
+@@ -3,13 +3,14 @@
+     this.database = database;
+     this.logger = logger;
+     
++    // Define rollup hierarchy - each level uses the previous as source
+     this.rollupIntervals = [
+-      { key: '5m', ms: 5 * 60 * 1000, seconds: 5 * 60 },
+-      { key: '30m', ms: 30 * 60 * 1000, seconds: 30 * 60 },
+-      { key: '1h', ms: 60 * 60 * 1000, seconds: 60 * 60 },
+-      { key: '12h', ms: 12 * 60 * 60 * 1000, seconds: 12 * 60 * 60 },
+-      { key: '1d', ms: 24 * 60 * 60 * 1000, seconds: 24 * 60 * 60 },
+-      { key: '1mo', ms: 30 * 24 * 60 * 60 * 1000, seconds: 30 * 24 * 60 * 60 }
++      { key: '5m', seconds: 5 * 60, source: 'metrics', maxEntries: 120 },
++      { key: '30m', seconds: 30 * 60, source: '5m', maxEntries: 120 },
++      { key: '1h', seconds: 60 * 60, source: '30m', maxEntries: 120 },
++      { key: '12h', seconds: 12 * 60 * 60, source: '1h', maxEntries: 120 },
++      { key: '1d', seconds: 24 * 60 * 60, source: '12h', maxEntries: 120 },
++      { key: '1mo', seconds: 30 * 24 * 60 * 60, source: '1d', maxEntries: 120 }
+     ];
+   }
+ 

@@ -1,0 +1,24 @@
+diff --git a/Users/michael/Projects/oss/graph-monitor/data-capture/chartGenerator.js b/Users/michael/Projects/oss/graph-monitor/data-capture/chartGenerator.js
+index 1234567..abcdefg 100644
+--- a/Users/michael/Projects/oss/graph-monitor/data-capture/chartGenerator.js
++++ b/Users/michael/Projects/oss/graph-monitor/data-capture/chartGenerator.js
+@@ -213,19 +213,7 @@
+     return grouped;
+   }
+ 
+-  getUniqueTimestamps(data) {
+-    const timestamps = [...new Set(data.map(d => d.timestamp))];
+-    return timestamps.sort((a, b) => a - b).map(ts => this.formatTimestamp(ts));
+-  }
+ 
+-  alignDataToLabels(values, labels) {
+-    const timestampMap = {};
+-    values.forEach(v => {
+-      timestampMap[this.formatTimestamp(v.timestamp)] = v.value;
+-    });
+-    return labels.map(label => timestampMap[label] || null);
+-  }
+-
+   getChartType(type) {
+     const typeMap = {
+       'LineChart': 'line',

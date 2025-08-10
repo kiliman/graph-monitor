@@ -1,0 +1,48 @@
+diff --git a/Users/michael/Projects/oss/graph-monitor/data-capture/rollup.js b/Users/michael/Projects/oss/graph-monitor/data-capture/rollup.js
+index 1234567..abcdefg 100644
+--- a/Users/michael/Projects/oss/graph-monitor/data-capture/rollup.js
++++ b/Users/michael/Projects/oss/graph-monitor/data-capture/rollup.js
+@@ -14,27 +14,28 @@
+   }
+ 
+   start() {
+-    for (const interval of this.rollupIntervals) {
+-      this.scheduleRollup(interval);
+-    }
+-    
+-    this.performInitialRollups();
+-    
+-    this.logger.info('Started rollup manager with all intervals');
++    this.logger.info('Rollup manager started - will calculate rollups on metric capture');
+   }
+ 
+-  scheduleRollup(interval) {
+-    const task = setInterval(() => {
+-      this.performRollup(interval);
+-    }, interval.ms);
++  async calculateRollupsForMetrics(metrics) {
++    const uniqueKeys = new Set();
++    metrics.forEach(m => uniqueKeys.add(`${m.key}:${m.name}`));
+     
+-    this.intervals.set(interval.key, task);
+-    this.logger.debug(`Scheduled rollup for ${interval.key} interval`);
++    for (const keyName of uniqueKeys) {
++      const [key, name] = keyName.split(':');
++      await this.calculateRollupsForMetric(key, name);
++    }
+   }
+ 
+-  async performInitialRollups() {
++  async calculateRollupsForMetric(key, name) {
++    const now = Math.floor(Date.now() / 1000);
++    
+     for (const interval of this.rollupIntervals) {
+-      await this.performRollup(interval);
++      try {
++        await this.updateRollup(interval, key, name, now);
++      } catch (error) {
++        this.logger.error(`Error calculating ${interval.key} rollup for ${key}/${name}: ${error.message}`);
++      }
+     }
+   }
+ 

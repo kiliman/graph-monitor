@@ -1,0 +1,21 @@
+Rows found: 10
+First few rows: [
+  {
+    "timestamp": 1753210552,
+    "key": "bde",
+    "value": 200,
+    "unit": null
+  },
+  {
+    "timestamp": 1753210552,
+    "key": "google",
+    "value": 200,
+    "unit": null
+  },
+  {
+    "timestamp": 1753210522,
+    "key": "bde",
+    "value": 200,
+    "unit": null
+  }
+]

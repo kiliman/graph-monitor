@@ -1,0 +1,27 @@
+Testing: http://localhost:3001/api/metrics/latest?key=all&name=status&limit=10
+Response status: 200
+Data length: 0
+Data: []
+
+---
+
+Testing: http://localhost:3001/api/metrics/latest?key=google&name=status&limit=10
+Response status: 200
+Data length: 10
+Data: [
+  {
+    "timestamp": 1753210012,
+    "value": 200,
+    "unit": null
+  },
+  {
+    "timestamp": 1753210072,
+    "value": 200,
+    "unit": null
+  },
+  {
+    "timestamp": 1753210132,
+    "value": 200,
+    "unit": null
+  }
+]

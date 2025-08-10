@@ -1,0 +1,24 @@
+diff --git a/Users/michael/Projects/oss/graph-monitor/data-capture/chartGenerator.js b/Users/michael/Projects/oss/graph-monitor/data-capture/chartGenerator.js
+index 1234567..abcdefg 100644
+--- a/Users/michael/Projects/oss/graph-monitor/data-capture/chartGenerator.js
++++ b/Users/michael/Projects/oss/graph-monitor/data-capture/chartGenerator.js
+@@ -130,8 +130,7 @@
+         borderColor: this.getColor(index),
+         fill: isAreaChart,
+         tension: 0.1,
+-        pointRadius: 0,
+-        pointHoverRadius: 4
++        pointRadius: 0
+       }));
+     } else {
+       labels = data.map(d => this.formatTimestamp(d.timestamp));
+@@ -144,8 +143,7 @@
+         borderWidth: 2,
+         fill: isAreaChart,
+         tension: 0.1,
+-        pointRadius: 0,
+-        pointHoverRadius: 4
++        pointRadius: 0
+       }];
+     }
+ 

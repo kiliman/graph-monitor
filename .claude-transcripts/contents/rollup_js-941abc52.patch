@@ -1,0 +1,22 @@
+diff --git a/Users/michael/Projects/oss/graph-monitor/data-capture/rollup.js b/Users/michael/Projects/oss/graph-monitor/data-capture/rollup.js
+index 1234567..abcdefg 100644
+--- a/Users/michael/Projects/oss/graph-monitor/data-capture/rollup.js
++++ b/Users/michael/Projects/oss/graph-monitor/data-capture/rollup.js
+@@ -2,7 +2,6 @@
+   constructor(database, logger) {
+     this.database = database;
+     this.logger = logger;
+-    this.intervals = new Map();
+     
+     this.rollupIntervals = [
+       { key: '5m', ms: 5 * 60 * 1000, seconds: 5 * 60 },
+@@ -10,8 +9,7 @@
+       { key: '1h', ms: 60 * 60 * 1000, seconds: 60 * 60 },
+       { key: '12h', ms: 12 * 60 * 60 * 1000, seconds: 12 * 60 * 60 },
+       { key: '1d', ms: 24 * 60 * 60 * 1000, seconds: 24 * 60 * 60 },
+-      { key: '1mo', ms: 30 * 24 * 60 * 60 * 1000, seconds: 30 * 24 * 60 * 60 },
+-      { key: '1y', ms: 365 * 24 * 60 * 60 * 1000, seconds: 365 * 24 * 60 * 60 }
++      { key: '1mo', ms: 30 * 24 * 60 * 60 * 1000, seconds: 30 * 24 * 60 * 60 }
+     ];
+   }
+ 

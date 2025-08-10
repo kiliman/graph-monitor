@@ -1,0 +1,22 @@
+diff --git a/Users/michael/Projects/oss/graph-monitor/data-capture/chartGenerator.js b/Users/michael/Projects/oss/graph-monitor/data-capture/chartGenerator.js
+index 1234567..abcdefg 100644
+--- a/Users/michael/Projects/oss/graph-monitor/data-capture/chartGenerator.js
++++ b/Users/michael/Projects/oss/graph-monitor/data-capture/chartGenerator.js
+@@ -17,7 +17,7 @@
+     });
+   }
+ 
+-  async generateAllCharts() {
++  async generateAllCharts(forceRegenerate = false) {
+     try {
+       const outputDir = path.join(__dirname, '..', 'charts');
+       await fs.mkdir(outputDir, { recursive: true });
+@@ -29,7 +29,7 @@
+       for (const [title, graphConfig] of Object.entries(graphs)) {
+         const filename = this.sanitizeFilename(title) + '.png';
+         const filepath = path.join(outputDir, filename);
+-        const shouldRegenerate = await this.shouldRegenerateChart(filepath, title, graphConfig);
++        const shouldRegenerate = forceRegenerate || await this.shouldRegenerateChart(filepath, title, graphConfig);
+         
+         if (shouldRegenerate) {
+           await this.generateChart(title, graphConfig);

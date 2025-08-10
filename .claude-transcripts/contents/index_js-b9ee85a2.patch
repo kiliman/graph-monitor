@@ -1,0 +1,21 @@
+diff --git a/Users/michael/Projects/oss/graph-monitor/data-capture/index.js b/Users/michael/Projects/oss/graph-monitor/data-capture/index.js
+index 1234567..abcdefg 100644
+--- a/Users/michael/Projects/oss/graph-monitor/data-capture/index.js
++++ b/Users/michael/Projects/oss/graph-monitor/data-capture/index.js
+@@ -2,6 +2,7 @@
+ const Database = require('./database');
+ const MetricScheduler = require('./scheduler');
+ const RollupManager = require('./rollup');
++const ChartGenerator = require('./chartGenerator');
+ const createLogger = require('./logger');
+ const fs = require('fs');
+ const path = require('path');
+@@ -13,6 +14,8 @@
+     this.database = new Database();
+     this.scheduler = null;
+     this.rollupManager = null;
++    this.chartGenerator = null;
++    this.chartInterval = null;
+   }
+ 
+   async start() {

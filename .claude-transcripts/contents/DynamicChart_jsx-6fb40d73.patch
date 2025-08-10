@@ -1,0 +1,21 @@
+diff --git a/Users/michael/Projects/oss/graph-monitor/graph-web-app/src/components/DynamicChart.jsx b/Users/michael/Projects/oss/graph-monitor/graph-web-app/src/components/DynamicChart.jsx
+index 1234567..abcdefg 100644
+--- a/Users/michael/Projects/oss/graph-monitor/graph-web-app/src/components/DynamicChart.jsx
++++ b/Users/michael/Projects/oss/graph-monitor/graph-web-app/src/components/DynamicChart.jsx
+@@ -73,8 +73,6 @@
+           timestamp: formatTimestamp(item.timestamp),
+           ...item.data
+         }));
+-        
+-        console.log('Transformed data for all sites:', transformedData);
+       } else {
+         transformedData = transformMetricsData(
+           rawData,
+@@ -83,7 +81,6 @@
+         );
+       }
+       
+-      console.log('Chart data:', { metricKey, yAxisName, dataLength: transformedData.length, sample: transformedData[0] });
+       setData(transformedData);
+     } catch (err) {
+       setError(err.message);

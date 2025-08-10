@@ -1,0 +1,46 @@
+diff --git a/Users/michael/Projects/oss/graph-monitor/data-capture/scheduler.js b/Users/michael/Projects/oss/graph-monitor/data-capture/scheduler.js
+index 1234567..abcdefg 100644
+--- a/Users/michael/Projects/oss/graph-monitor/data-capture/scheduler.js
++++ b/Users/michael/Projects/oss/graph-monitor/data-capture/scheduler.js
+@@ -15,29 +15,23 @@
+   start() {
+     const metrics = this.config.getMetrics();
+     
+-    for (const [key, metric] of Object.entries(metrics)) {
+-      this.scheduleMetric(key, metric);
+-    }
++    // Execute all metrics immediately
++    this.executeAllMetrics();
+     
+-    this.logger.info(`Started ${this.tasks.size} metric collection tasks`);
++    // Then run every minute
++    this.mainInterval = setInterval(() => {
++      this.executeAllMetrics();
++    }, 60000);
++    
++    this.logger.info(`Started metric collection - running all metrics every minute`);
+   }
+ 
+-  scheduleMetric(key, metric) {
+-    const frequencyMs = this.config.parseFrequency(metric.frequency);
++  async executeAllMetrics() {
++    const metrics = this.config.getMetrics();
+     
+-    if (!frequencyMs) {
+-      this.logger.error(`Invalid frequency for metric ${key}: ${metric.frequency}`);
+-      return;
+-    }
+-
+-    this.executeMetric(key, metric);
+-    
+-    const interval = setInterval(() => {
++    for (const [key, metric] of Object.entries(metrics)) {
+       this.executeMetric(key, metric);
+-    }, frequencyMs);
+-    
+-    this.intervals.set(key, interval);
+-    this.logger.info(`Scheduled metric "${key}" to run every ${metric.frequency}`);
++    }
+   }
+ 
+   async executeMetric(key, metric) {

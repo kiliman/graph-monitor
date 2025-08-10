@@ -1,0 +1,54 @@
+diff --git a/Users/michael/Projects/oss/graph-monitor/data-capture/chartGenerator.js b/Users/michael/Projects/oss/graph-monitor/data-capture/chartGenerator.js
+index 1234567..abcdefg 100644
+--- a/Users/michael/Projects/oss/graph-monitor/data-capture/chartGenerator.js
++++ b/Users/michael/Projects/oss/graph-monitor/data-capture/chartGenerator.js
+@@ -274,6 +274,49 @@
+       .replace(/^-+|-+$/g, '');
+   }
+ 
++  async shouldRegenerateChart(filepath, title, config) {
++    try {
++      // Always regenerate "latest" source charts
++      if (config.source === 'latest') {
++        return true;
++      }
++      
++      // Check if file exists
++      const stats = await fs.stat(filepath).catch(() => null);
++      if (!stats) {
++        return true; // File doesn't exist, need to generate
++      }
++      
++      // For rollup charts, check if we have new data since last generation
++      const fileModifiedTime = Math.floor(stats.mtimeMs / 1000);
++      
++      // Get the rollup interval
++      const increment = config.source.replace('rollup-', '');
++      const metricKey = this.extractMetricKey(title);
++      const yAxisName = config['y-axis'];
++      
++      // Check latest rollup timestamp
++      const latestRollup = await this.database.all(
++        `SELECT MAX(timestamp) as latest 
++         FROM rollups 
++         WHERE increment = ? AND key = ? AND name = ?`,
++        [increment, metricKey, yAxisName]
++      );
++      
++      if (!latestRollup || !latestRollup[0] || !latestRollup[0].latest) {
++        return false; // No rollup data available
++      }
++      
++      const latestDataTime = latestRollup[0].latest;
++      
++      // Regenerate if we have data newer than the file
++      return latestDataTime >= fileModifiedTime;
++    } catch (error) {
++      this.logger.error(`Error checking regeneration for "${title}": ${error.message}`);
++      return true; // On error, regenerate to be safe
++    }
++  }
++
+   async generateIndexHtml() {
+     const graphs = this.config.getGraphs();
+     const chartFiles = Object.keys(graphs).map(title => ({

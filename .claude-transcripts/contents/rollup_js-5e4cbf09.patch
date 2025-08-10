@@ -1,0 +1,31 @@
+diff --git a/Users/michael/Projects/oss/graph-monitor/data-capture/rollup.js b/Users/michael/Projects/oss/graph-monitor/data-capture/rollup.js
+index 1234567..abcdefg 100644
+--- a/Users/michael/Projects/oss/graph-monitor/data-capture/rollup.js
++++ b/Users/michael/Projects/oss/graph-monitor/data-capture/rollup.js
+@@ -106,6 +106,26 @@
+     await this.cleanupOldData(interval, key, name, currentTime);
+   }
+ 
++  async cleanupOldData(interval, key, name, currentTime) {
++    // Calculate cutoff time based on max entries
++    const cutoffTime = currentTime - (interval.maxEntries * interval.seconds);
++    
++    if (interval.source === 'metrics') {
++      // For 5m rollup, clean up raw metrics older than 1 hour
++      const metricsKeepTime = currentTime - (60 * 60); // Keep last hour
++      await this.database.all(
++        'DELETE FROM metrics WHERE key = ? AND name = ? AND timestamp < ?',
++        [key, name, metricsKeepTime]
++      );
++    }
++    
++    // Clean up old rollups for this interval
++    await this.database.all(
++      'DELETE FROM rollups WHERE increment = ? AND key = ? AND name = ? AND timestamp < ?',
++      [interval.key, key, name, cutoffTime]
++    );
++  }
++
+   alignTimestamp(timestamp, intervalSeconds) {
+     return Math.floor(timestamp / intervalSeconds) * intervalSeconds;
+   }

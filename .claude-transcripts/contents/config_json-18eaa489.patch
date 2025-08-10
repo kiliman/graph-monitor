@@ -1,0 +1,28 @@
+diff --git a/Users/michael/Projects/oss/graph-monitor/config.json b/Users/michael/Projects/oss/graph-monitor/config.json
+index 1234567..abcdefg 100644
+--- a/Users/michael/Projects/oss/graph-monitor/config.json
++++ b/Users/michael/Projects/oss/graph-monitor/config.json
+@@ -11,6 +11,7 @@
+   },
+   "graphs": {
+     "Response Time: mail.bigdeskenergy.com (Last hour)": {
++      "metric": "bde",
+       "source": "latest",
+       "limit": "1h",
+       "type": "LineChart",
+@@ -18,6 +19,7 @@
+       "y-axis": "duration"
+     },
+     "Response Time: mail.bigdeskenergy.com (Last 24 hours)": {
++      "metric": "bde",
+       "source": "rollup-5m",
+       "limit": "24h",
+       "type": "LineChart",
+@@ -25,6 +27,7 @@
+       "y-axis": "duration"
+     },
+     "Status Codes: All Sites (Last hour)": {
++      "metric": "*",
+       "source": "latest",
+       "limit": "1h",
+       "type": "BarChart",

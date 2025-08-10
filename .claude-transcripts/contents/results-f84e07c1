@@ -1,0 +1,20 @@
+[
+    {
+        "timestamp": 1753210582,
+        "key": "bde",
+        "value": 200,
+        "unit": null
+    },
+    {
+        "timestamp": 1753210612,
+        "key": "google",
+        "value": 200,
+        "unit": null
+    },
+    {
+        "timestamp": 1753210612,
+        "key": "bde",
+        "value": 200,
+        "unit": null
+    },
+    {

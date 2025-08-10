@@ -1,0 +1,27 @@
+diff --git a/Users/michael/Projects/oss/graph-monitor/data-capture/config.js b/Users/michael/Projects/oss/graph-monitor/data-capture/config.js
+index 1234567..abcdefg 100644
+--- a/Users/michael/Projects/oss/graph-monitor/data-capture/config.js
++++ b/Users/michael/Projects/oss/graph-monitor/data-capture/config.js
+@@ -64,6 +64,22 @@
+         throw new Error(`Invalid frequency format for metric "${key}": ${metric.frequency}`);
+       }
+     }
++
++    // Validate graphs if present
++    if (this.config.graphs) {
++      const metricKeys = Object.keys(this.config.metrics);
++      
++      for (const [title, graph] of Object.entries(this.config.graphs)) {
++        if (!graph.metric) {
++          throw new Error(`Graph "${title}" must have a "metric" field`);
++        }
++        
++        // Validate metric exists unless it's "*" for all
++        if (graph.metric !== '*' && !metricKeys.includes(graph.metric)) {
++          throw new Error(`Graph "${title}" references unknown metric: ${graph.metric}`);
++        }
++      }
++    }
+   }
+ 
+   isValidFrequency(frequency) {

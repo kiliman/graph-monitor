@@ -1,0 +1,19 @@
+diff --git a/Users/michael/Projects/oss/graph-monitor/config.json b/Users/michael/Projects/oss/graph-monitor/config.json
+index 1234567..abcdefg 100644
+--- a/Users/michael/Projects/oss/graph-monitor/config.json
++++ b/Users/michael/Projects/oss/graph-monitor/config.json
+@@ -1,12 +1,10 @@
+ {
+   "metrics": {
+     "bde": {
+-      "command": "curl -o /dev/null -s -w 'duration: %{time_total} s\\nstatus: %{http_code}' https://mail.bigdeskenergy.com",
+-      "frequency": "30s"
++      "command": "curl -o /dev/null -s -w 'duration: %{time_total} s\\nstatus: %{http_code}' https://mail.bigdeskenergy.com"
+     },
+     "google": {
+-      "command": "curl -o /dev/null -s -w 'duration: %{time_total} s\\nstatus: %{http_code}' https://www.google.com",
+-      "frequency": "1m"
++      "command": "curl -o /dev/null -s -w 'duration: %{time_total} s\\nstatus: %{http_code}' https://www.google.com"
+     }
+   },
+   "graphs": {

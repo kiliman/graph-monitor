@@ -1,0 +1,32 @@
+diff --git a/Users/michael/Projects/oss/graph-monitor/data-capture/config.js b/Users/michael/Projects/oss/graph-monitor/data-capture/config.js
+index 1234567..abcdefg 100644
+--- a/Users/michael/Projects/oss/graph-monitor/data-capture/config.js
++++ b/Users/michael/Projects/oss/graph-monitor/data-capture/config.js
+@@ -76,27 +76,7 @@
+     }
+   }
+ 
+-  isValidFrequency(frequency) {
+-    const pattern = /^\d+[smh]$/;
+-    return pattern.test(frequency);
+-  }
+ 
+-  parseFrequency(frequency) {
+-    const match = frequency.match(/^(\d+)([smh])$/);
+-    if (!match) return null;
+-
+-    const value = parseInt(match[1], 10);
+-    const unit = match[2];
+-
+-    const multipliers = {
+-      's': 1000,
+-      'm': 60 * 1000,
+-      'h': 60 * 60 * 1000
+-    };
+-
+-    return value * multipliers[unit];
+-  }
+-
+   getMetrics() {
+     if (!this.config) {
+       this.load();

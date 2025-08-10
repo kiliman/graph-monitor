@@ -1,0 +1,163 @@
+Error: Command timed out after 2m 0.0s
+Server running on http://localhost:3001
+Connected to metrics database
+Request params: { key: 'bde', name: 'duration', limit: '242', limitValue: 242 }
+SQL: 
+      SELECT timestamp, value, unit
+      FROM metrics
+      WHERE key = ? AND name = ?
+      ORDER BY timestamp DESC
+      LIMIT ?
+    
+Params: [ 'bde', 'duration', 242 ]
+Request params: { key: 'all', name: 'status', limit: '242', limitValue: 242 }
+SQL: 
+      SELECT timestamp, key, value, unit
+      FROM metrics
+      WHERE name = ?
+      ORDER BY timestamp DESC
+      LIMIT ?
+    
+Params: [ 'status', 242 ]
+Rows returned: 65
+Rows returned: 98
+Request params: { key: 'bde', name: 'duration', limit: '242', limitValue: 242 }
+SQL: 
+      SELECT timestamp, value, unit
+      FROM metrics
+      WHERE key = ? AND name = ?
+      ORDER BY timestamp DESC
+      LIMIT ?
+    
+Params: [ 'bde', 'duration', 242 ]
+Request params: { key: 'all', name: 'status', limit: '242', limitValue: 242 }
+SQL: 
+      SELECT timestamp, key, value, unit
+      FROM metrics
+      WHERE name = ?
+      ORDER BY timestamp DESC
+      LIMIT ?
+    
+Params: [ 'status', 242 ]
+Rows returned: 65
+Rows returned: 98
+Request params: { key: 'bde', name: 'duration', limit: '242', limitValue: 242 }
+SQL: 
+      SELECT timestamp, value, unit
+      FROM metrics
+      WHERE key = ? AND name = ?
+      ORDER BY timestamp DESC
+      LIMIT ?
+    
+Params: [ 'bde', 'duration', 242 ]
+Request params: { key: 'all', name: 'status', limit: '242', limitValue: 242 }
+SQL: 
+      SELECT timestamp, key, value, unit
+      FROM metrics
+      WHERE name = ?
+      ORDER BY timestamp DESC
+      LIMIT ?
+    
+Params: [ 'status', 242 ]
+Rows returned: 66
+Request params: { key: 'bde', name: 'duration', limit: '242', limitValue: 242 }
+SQL: 
+      SELECT timestamp, value, unit
+      FROM metrics
+      WHERE key = ? AND name = ?
+      ORDER BY timestamp DESC
+      LIMIT ?
+    
+Params: [ 'bde', 'duration', 242 ]
+Rows returned: 99
+Request params: { key: 'all', name: 'status', limit: '242', limitValue: 242 }
+SQL: 
+      SELECT timestamp, key, value, unit
+      FROM metrics
+      WHERE name = ?
+      ORDER BY timestamp DESC
+      LIMIT ?
+    
+Params: [ 'status', 242 ]
+Rows returned: 66
+Rows returned: 99
+Request params: { key: 'bde', name: 'duration', limit: '242', limitValue: 242 }
+SQL: 
+      SELECT timestamp, value, unit
+      FROM metrics
+      WHERE key = ? AND name = ?
+      ORDER BY timestamp DESC
+      LIMIT ?
+    
+Params: [ 'bde', 'duration', 242 ]
+Rows returned: 67
+Request params: { key: 'all', name: 'status', limit: '242', limitValue: 242 }
+SQL: 
+      SELECT timestamp, key, value, unit
+      FROM metrics
+      WHERE name = ?
+      ORDER BY timestamp DESC
+      LIMIT ?
+    
+Params: [ 'status', 242 ]
+Request params: { key: 'bde', name: 'duration', limit: '242', limitValue: 242 }
+SQL: 
+      SELECT timestamp, value, unit
+      FROM metrics
+      WHERE key = ? AND name = ?
+      ORDER BY timestamp DESC
+      LIMIT ?
+    
+Params: [ 'bde', 'duration', 242 ]
+Rows returned: 101
+Request params: { key: 'all', name: 'status', limit: '242', limitValue: 242 }
+SQL: 
+      SELECT timestamp, key, value, unit
+      FROM metrics
+      WHERE name = ?
+      ORDER BY timestamp DESC
+      LIMIT ?
+    
+Params: [ 'status', 242 ]
+Rows returned: 67
+Rows returned: 101
+Request params: { key: 'bde', name: 'duration', limit: '242', limitValue: 242 }
+SQL: 
+      SELECT timestamp, value, unit
+      FROM metrics
+      WHERE key = ? AND name = ?
+      ORDER BY timestamp DESC
+      LIMIT ?
+    
+Params: [ 'bde', 'duration', 242 ]
+Request params: { key: 'all', name: 'status', limit: '242', limitValue: 242 }
+SQL: 
+      SELECT timestamp, key, value, unit
+      FROM metrics
+      WHERE name = ?
+      ORDER BY timestamp DESC
+      LIMIT ?
+    
+Params: [ 'status', 242 ]
+Rows returned: 68
+Rows returned: 102
+Request params: { key: 'bde', name: 'duration', limit: '242', limitValue: 242 }
+SQL: 
+      SELECT timestamp, value, unit
+      FROM metrics
+      WHERE key = ? AND name = ?
+      ORDER BY timestamp DESC
+      LIMIT ?
+    
+Params: [ 'bde', 'duration', 242 ]
+Request params: { key: 'all', name: 'status', limit: '242', limitValue: 242 }
+SQL: 
+      SELECT timestamp, key, value, unit
+      FROM metrics
+      WHERE name = ?
+      ORDER BY timestamp DESC
+      LIMIT ?
+    
+Params: [ 'status', 242 ]
+Rows returned: 68
+Rows returned: 102

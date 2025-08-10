@@ -1,0 +1,19 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "Perfect! I've successfully created the 'data-capture' directory in the project root at `/Users/michael/Projects/oss/graph-monitor/data-capture/`. The directory is now ready for use."
+    }
+  ],
+  "totalDurationMs": 30132,
+  "totalTokens": 11056,
+  "totalToolUseCount": 3,
+  "usage": {
+    "input_tokens": 4,
+    "cache_creation_input_tokens": 150,
+    "cache_read_input_tokens": 10853,
+    "output_tokens": 49,
+    "service_tier": "standard"
+  },
+  "wasInterrupted": false
+}

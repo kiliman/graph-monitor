@@ -1,0 +1,69 @@
+diff --git a/Users/michael/Projects/oss/graph-monitor/data-capture/rollup.js b/Users/michael/Projects/oss/graph-monitor/data-capture/rollup.js
+index 1234567..abcdefg 100644
+--- a/Users/michael/Projects/oss/graph-monitor/data-capture/rollup.js
++++ b/Users/michael/Projects/oss/graph-monitor/data-capture/rollup.js
+@@ -39,28 +39,42 @@
+     }
+   }
+ 
+-  async performRollup(interval) {
+-    try {
+-      const now = Math.floor(Date.now() / 1000);
+-      const alignedTimestamp = this.alignTimestamp(now, interval.seconds);
+-      const startTime = alignedTimestamp - interval.seconds;
+-      
+-      const metricsQuery = `
+-        SELECT DISTINCT key, name 
+-        FROM metrics 
+-        WHERE timestamp >= ? AND timestamp < ?
+-      `;
+-      
+-      const metrics = await this.database.all(metricsQuery, [startTime, alignedTimestamp]);
+-      
+-      for (const { key, name } of metrics) {
+-        await this.calculateAndStoreRollup(interval, key, name, startTime, alignedTimestamp);
+-      }
+-      
+-      this.logger.debug(`Completed rollup for ${interval.key} interval at ${new Date(alignedTimestamp * 1000).toISOString()}`);
+-    } catch (error) {
+-      this.logger.error(`Error performing rollup for ${interval.key}: ${error.message}`);
+-    }
++  async updateRollup(interval, key, name, currentTime) {
++    const alignedTimestamp = this.alignTimestamp(currentTime, interval.seconds);
++    const startTime = alignedTimestamp;
++    const endTime = alignedTimestamp + interval.seconds;
++    
++    // Get metrics for this interval
++    const metrics = await this.database.getMetricsForRollup(key, name, startTime, endTime);
++    
++    if (metrics.length === 0) return;
++    
++    const values = metrics.map(m => m.value);
++    const min = Math.min(...values);
++    const max = Math.max(...values);
++    const average = values.reduce((a, b) => a + b, 0) / values.length;
++    
++    // Get unit from first metric
++    const firstMetric = await this.database.all(
++      'SELECT unit FROM metrics WHERE key = ? AND name = ? LIMIT 1',
++      [key, name]
++    );
++    const unit = firstMetric[0]?.unit || null;
++    
++    // Insert or update the rollup
++    await this.database.insertRollup(
++      interval.key,
++      alignedTimestamp,
++      key,
++      name,
++      unit,
++      min,
++      max,
++      average
++    );
++    
++    // Cleanup old rollups
++    await this.database.cleanupOldRollups(interval.key, key, name);
+   }
+ 
+   async calculateAndStoreRollup(interval, key, name, startTime, endTime) {

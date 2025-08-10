@@ -1,0 +1,45 @@
+diff --git a/Users/michael/Projects/oss/graph-monitor/data-capture/index.js b/Users/michael/Projects/oss/graph-monitor/data-capture/index.js
+index 1234567..abcdefg 100644
+--- a/Users/michael/Projects/oss/graph-monitor/data-capture/index.js
++++ b/Users/michael/Projects/oss/graph-monitor/data-capture/index.js
+@@ -69,6 +69,40 @@
+     this.logger.info('Started chart generation (updates every minute)');
+   }
+ 
++  startConfigWatcher() {
++    const configPath = this.config.configPath;
++    
++    this.logger.info(`Watching config file for changes: ${configPath}`);
++    
++    // Use fs.watchFile for better cross-platform compatibility
++    this.configWatcher = fs.watchFile(configPath, { interval: 2000 }, (curr, prev) => {
++      // Check if file was modified (mtime changed)
++      if (curr.mtime > prev.mtime) {
++        this.logger.info('Configuration file changed, attempting to reload...');
++        this.reloadConfig();
++      }
++    });
++  }
++
++  reloadConfig() {
++    const result = this.config.reload();
++    
++    if (result.success) {
++      this.logger.info('Configuration reloaded successfully');
++      
++      // Reload scheduler with new config
++      this.scheduler.reload(this.config);
++      
++      // Update chart generator with new config
++      this.chartGenerator = new ChartGenerator(this.database, this.config, this.logger);
++      
++      // Regenerate charts immediately with new config
++      this.chartGenerator.generateAllCharts();
++    } else {
++      this.logger.error(`Configuration reload failed, keeping existing config: ${result.error}`);
++    }
++  }
++
+   setupShutdownHandlers() {
+     const shutdown = async (signal) => {
+       this.logger.info(`Received ${signal}, shutting down gracefully...`);

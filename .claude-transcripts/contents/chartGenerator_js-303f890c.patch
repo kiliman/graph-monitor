@@ -1,0 +1,139 @@
+diff --git a/Users/michael/Projects/oss/graph-monitor/data-capture/chartGenerator.js b/Users/michael/Projects/oss/graph-monitor/data-capture/chartGenerator.js
+index 1234567..abcdefg 100644
+--- a/Users/michael/Projects/oss/graph-monitor/data-capture/chartGenerator.js
++++ b/Users/michael/Projects/oss/graph-monitor/data-capture/chartGenerator.js
+@@ -137,30 +137,111 @@
+         spanGaps: false
+       }));
+     } else {
+-      // Create a map of timestamp to value for efficient lookup
+-      const dataMap = {};
+-      data.forEach(d => {
+-        const ts = d.timestamp;
+-        dataMap[ts] = d.average || d.value;
+-      });
++      // Check if we have rollup data with aggregation
++      const isRollup = config.source.startsWith('rollup-');
++      const hasAggregation = isRollup && config.aggregation && config.aggregation.length > 0;
+       
+-      // Align data to full time range
+-      const alignedData = labels.map(label => {
+-        const ts = this.parseFormattedTimestamp(label);
+-        return dataMap[ts] !== undefined ? dataMap[ts] : null;
+-      });
+-      
+-      datasets = [{
+-        label: config['y-axis'],
+-        data: alignedData,
+-        backgroundColor: isAreaChart ? 'rgba(75, 192, 192, 0.2)' : 'rgba(75, 192, 192, 0.2)',
+-        borderColor: 'rgb(75, 192, 192)',
+-        borderWidth: 2,
+-        fill: isAreaChart,
+-        tension: 0.1,
+-        pointRadius: 0,
+-        spanGaps: false
+-      }];
++      if (hasAggregation) {
++        // Create separate datasets for each aggregation type
++        const dataMaps = {
++          min: {},
++          max: {},
++          average: {}
++        };
++        
++        data.forEach(d => {
++          const ts = d.timestamp;
++          if (d.min !== undefined) dataMaps.min[ts] = d.min;
++          if (d.max !== undefined) dataMaps.max[ts] = d.max;
++          if (d.average !== undefined) dataMaps.average[ts] = d.average;
++        });
++        
++        datasets = [];
++        
++        // Add datasets for requested aggregations
++        if (config.aggregation.includes('min')) {
++          const minData = labels.map(label => {
++            const ts = this.parseFormattedTimestamp(label);
++            return dataMaps.min[ts] !== undefined ? dataMaps.min[ts] : null;
++          });
++          
++          datasets.push({
++            label: `${config['y-axis']} (min)`,
++            data: minData,
++            backgroundColor: 'rgba(54, 162, 235, 0.1)',
++            borderColor: 'rgb(54, 162, 235)',
++            borderWidth: 1,
++            fill: false,
++            tension: 0.1,
++            pointRadius: 0,
++            spanGaps: false,
++            borderDash: [5, 5]
++          });
++        }
++        
++        if (config.aggregation.includes('average')) {
++          const avgData = labels.map(label => {
++            const ts = this.parseFormattedTimestamp(label);
++            return dataMaps.average[ts] !== undefined ? dataMaps.average[ts] : null;
++          });
++          
++          datasets.push({
++            label: `${config['y-axis']} (avg)`,
++            data: avgData,
++            backgroundColor: isAreaChart ? 'rgba(75, 192, 192, 0.2)' : 'rgba(75, 192, 192, 0.2)',
++            borderColor: 'rgb(75, 192, 192)',
++            borderWidth: 2,
++            fill: isAreaChart,
++            tension: 0.1,
++            pointRadius: 0,
++            spanGaps: false
++          });
++        }
++        
++        if (config.aggregation.includes('max')) {
++          const maxData = labels.map(label => {
++            const ts = this.parseFormattedTimestamp(label);
++            return dataMaps.max[ts] !== undefined ? dataMaps.max[ts] : null;
++          });
++          
++          datasets.push({
++            label: `${config['y-axis']} (max)`,
++            data: maxData,
++            backgroundColor: 'rgba(255, 99, 132, 0.1)',
++            borderColor: 'rgb(255, 99, 132)',
++            borderWidth: 1,
++            fill: false,
++            tension: 0.1,
++            pointRadius: 0,
++            spanGaps: false,
++            borderDash: [5, 5]
++          });
++        }
++      } else {
++        // Single dataset for non-aggregated data
++        const dataMap = {};
++        data.forEach(d => {
++          const ts = d.timestamp;
++          dataMap[ts] = d.average || d.value;
++        });
++        
++        const alignedData = labels.map(label => {
++          const ts = this.parseFormattedTimestamp(label);
++          return dataMap[ts] !== undefined ? dataMap[ts] : null;
++        });
++        
++        datasets = [{
++          label: config['y-axis'],
++          data: alignedData,
++          backgroundColor: isAreaChart ? 'rgba(75, 192, 192, 0.2)' : 'rgba(75, 192, 192, 0.2)',
++          borderColor: 'rgb(75, 192, 192)',
++          borderWidth: 2,
++          fill: isAreaChart,
++          tension: 0.1,
++          pointRadius: 0,
++          spanGaps: false
++        }];
++      }
+     }
+ 
+     return {

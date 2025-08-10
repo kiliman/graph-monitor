@@ -1,0 +1,15 @@
+Wrote to /Users/michael/Projects/oss/graph-monitor/data-capture/package.json:
+
+{
+  "name": "data-capture",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}

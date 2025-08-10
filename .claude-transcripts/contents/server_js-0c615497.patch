@@ -1,0 +1,43 @@
+diff --git a/Users/michael/Projects/oss/graph-monitor/graph-web-app/server.js b/Users/michael/Projects/oss/graph-monitor/graph-web-app/server.js
+index 1234567..abcdefg 100644
+--- a/Users/michael/Projects/oss/graph-monitor/graph-web-app/server.js
++++ b/Users/michael/Projects/oss/graph-monitor/graph-web-app/server.js
+@@ -34,15 +34,30 @@
+   const { key, name, limit } = req.query;
+   const limitValue = parseInt(limit) || 100;
+   
+-  const sql = `
+-    SELECT timestamp, value, unit
+-    FROM metrics
+-    WHERE key = ? AND name = ?
+-    ORDER BY timestamp DESC
+-    LIMIT ?
+-  `;
++  let sql;
++  let params;
+   
+-  db.all(sql, [key, name, limitValue], (err, rows) => {
++  if (key === 'all') {
++    sql = `
++      SELECT timestamp, key, value, unit
++      FROM metrics
++      WHERE name = ?
++      ORDER BY timestamp DESC
++      LIMIT ?
++    `;
++    params = [name, limitValue];
++  } else {
++    sql = `
++      SELECT timestamp, value, unit
++      FROM metrics
++      WHERE key = ? AND name = ?
++      ORDER BY timestamp DESC
++      LIMIT ?
++    `;
++    params = [key, name, limitValue];
++  }
++  
++  db.all(sql, params, (err, rows) => {
+     if (err) {
+       res.status(500).json({ error: err.message });
+     } else {

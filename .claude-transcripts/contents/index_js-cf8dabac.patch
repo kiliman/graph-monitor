@@ -1,0 +1,25 @@
+diff --git a/Users/michael/Projects/oss/graph-monitor/data-capture/index.js b/Users/michael/Projects/oss/graph-monitor/data-capture/index.js
+index 1234567..abcdefg 100644
+--- a/Users/michael/Projects/oss/graph-monitor/data-capture/index.js
++++ b/Users/michael/Projects/oss/graph-monitor/data-capture/index.js
+@@ -84,7 +84,7 @@
+     });
+   }
+ 
+-  reloadConfig() {
++  async reloadConfig() {
+     const result = this.config.reload();
+     
+     if (result.success) {
+@@ -96,8 +96,9 @@
+       // Update chart generator with new config
+       this.chartGenerator = new ChartGenerator(this.database, this.config, this.logger);
+       
+-      // Regenerate charts immediately with new config
+-      this.chartGenerator.generateAllCharts();
++      // Regenerate all charts immediately with new config
++      this.logger.info('Regenerating all charts with new configuration...');
++      await this.chartGenerator.generateAllCharts();
+     } else {
+       this.logger.error(`Configuration reload failed, keeping existing config: ${result.error}`);
+     }

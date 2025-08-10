@@ -1,0 +1,36 @@
+diff --git a/Users/michael/Projects/oss/graph-monitor/data-capture/config.js b/Users/michael/Projects/oss/graph-monitor/data-capture/config.js
+index 1234567..abcdefg 100644
+--- a/Users/michael/Projects/oss/graph-monitor/data-capture/config.js
++++ b/Users/michael/Projects/oss/graph-monitor/data-capture/config.js
+@@ -23,6 +23,31 @@
+     }
+   }
+ 
++  reload() {
++    try {
++      const configData = fs.readFileSync(this.configPath, 'utf8');
++      const newConfig = JSON.parse(configData);
++      
++      // Store old config in case validation fails
++      const oldConfig = this.config;
++      this.config = newConfig;
++      
++      try {
++        this.validate();
++        return { success: true, config: this.config };
++      } catch (validationError) {
++        // Restore old config if validation fails
++        this.config = oldConfig;
++        return { success: false, error: validationError.message };
++      }
++    } catch (error) {
++      if (error instanceof SyntaxError) {
++        return { success: false, error: `Invalid JSON: ${error.message}` };
++      }
++      return { success: false, error: error.message };
++    }
++  }
++
+   validate() {
+     if (!this.config.metrics || typeof this.config.metrics !== 'object') {
+       throw new Error('Configuration must contain a "metrics" object');

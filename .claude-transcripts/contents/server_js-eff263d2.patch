@@ -1,0 +1,29 @@
+diff --git a/Users/michael/Projects/oss/graph-monitor/graph-web-app/server.js b/Users/michael/Projects/oss/graph-monitor/graph-web-app/server.js
+index 1234567..abcdefg 100644
+--- a/Users/michael/Projects/oss/graph-monitor/graph-web-app/server.js
++++ b/Users/michael/Projects/oss/graph-monitor/graph-web-app/server.js
+@@ -34,6 +34,8 @@
+   const { key, name, limit } = req.query;
+   const limitValue = parseInt(limit) || 100;
+   
++  console.log('Request params:', { key, name, limit, limitValue });
++  
+   let sql;
+   let params;
+   
+@@ -57,10 +59,15 @@
+     params = [key, name, limitValue];
+   }
+   
++  console.log('SQL:', sql);
++  console.log('Params:', params);
++  
+   db.all(sql, params, (err, rows) => {
+     if (err) {
++      console.error('Database error:', err);
+       res.status(500).json({ error: err.message });
+     } else {
++      console.log('Rows returned:', rows.length);
+       res.json(rows.reverse());
+     }
+   });

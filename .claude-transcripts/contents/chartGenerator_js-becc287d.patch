@@ -1,0 +1,21 @@
+diff --git a/Users/michael/Projects/oss/graph-monitor/data-capture/chartGenerator.js b/Users/michael/Projects/oss/graph-monitor/data-capture/chartGenerator.js
+index 1234567..abcdefg 100644
+--- a/Users/michael/Projects/oss/graph-monitor/data-capture/chartGenerator.js
++++ b/Users/michael/Projects/oss/graph-monitor/data-capture/chartGenerator.js
+@@ -49,16 +49,6 @@
+ 
+   async generateChart(title, config) {
+     try {
+-      const filename = this.sanitizeFilename(title) + '.png';
+-      const filepath = path.join(__dirname, '..', 'charts', filename);
+-      
+-      // Check if we should regenerate this chart
+-      const shouldRegenerate = await this.shouldRegenerateChart(filepath, title, config);
+-      if (!shouldRegenerate) {
+-        this.logger.debug(`Skipping chart generation for "${title}" - no new data`);
+-        return;
+-      }
+-
+       const data = await this.fetchChartData(title, config);
+       
+       if (!data || data.length === 0) {

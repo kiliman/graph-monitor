@@ -1,0 +1,37 @@
+diff --git a/Users/michael/Projects/oss/graph-monitor/data-capture/chartGenerator.js b/Users/michael/Projects/oss/graph-monitor/data-capture/chartGenerator.js
+index 1234567..abcdefg 100644
+--- a/Users/michael/Projects/oss/graph-monitor/data-capture/chartGenerator.js
++++ b/Users/michael/Projects/oss/graph-monitor/data-capture/chartGenerator.js
+@@ -113,6 +113,7 @@
+ 
+   createChartConfig(title, config, data) {
+     const chartType = this.getChartType(config.type);
++    const isAreaChart = config.type === 'AreaChart';
+     const isMultiSeries = data.length > 0 && data[0].key;
+     
+     let datasets;
+@@ -125,9 +126,9 @@
+       datasets = Object.entries(groupedData).map(([key, values], index) => ({
+         label: key,
+         data: this.alignDataToLabels(values, labels),
+-        backgroundColor: this.getColor(index),
++        backgroundColor: isAreaChart ? this.getColor(index, 0.2) : this.getColor(index),
+         borderColor: this.getColor(index),
+-        fill: false,
++        fill: isAreaChart,
+         tension: 0.1
+       }));
+     } else {
+@@ -136,10 +137,10 @@
+       datasets = [{
+         label: config['y-axis'],
+         data: values,
+-        backgroundColor: 'rgba(75, 192, 192, 0.2)',
++        backgroundColor: isAreaChart ? 'rgba(75, 192, 192, 0.2)' : 'rgba(75, 192, 192, 0.2)',
+         borderColor: 'rgb(75, 192, 192)',
+         borderWidth: 2,
+-        fill: chartType === 'line' ? false : true,
++        fill: isAreaChart,
+         tension: 0.1
+       }];
+     }

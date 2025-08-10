@@ -1,0 +1,28 @@
+diff --git a/Users/michael/Projects/oss/graph-monitor/data-capture/scheduler.js b/Users/michael/Projects/oss/graph-monitor/data-capture/scheduler.js
+index 1234567..abcdefg 100644
+--- a/Users/michael/Projects/oss/graph-monitor/data-capture/scheduler.js
++++ b/Users/michael/Projects/oss/graph-monitor/data-capture/scheduler.js
+@@ -75,6 +75,23 @@
+     }
+   }
+ 
++  reload(newConfig) {
++    this.logger.info('Reloading metric scheduler with new configuration...');
++    
++    // Stop all existing tasks
++    for (const [key, interval] of this.intervals) {
++      clearInterval(interval);
++      this.logger.debug(`Stopped metric collection for "${key}"`);
++    }
++    
++    this.intervals.clear();
++    this.tasks.clear();
++    
++    // Update config and restart with new metrics
++    this.config = newConfig;
++    this.start();
++  }
++
+   stop() {
+     for (const [key, interval] of this.intervals) {
+       clearInterval(interval);

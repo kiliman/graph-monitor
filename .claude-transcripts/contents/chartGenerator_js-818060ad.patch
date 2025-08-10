@@ -1,0 +1,32 @@
+diff --git a/Users/michael/Projects/oss/graph-monitor/data-capture/chartGenerator.js b/Users/michael/Projects/oss/graph-monitor/data-capture/chartGenerator.js
+index 1234567..abcdefg 100644
+--- a/Users/michael/Projects/oss/graph-monitor/data-capture/chartGenerator.js
++++ b/Users/michael/Projects/oss/graph-monitor/data-capture/chartGenerator.js
+@@ -217,16 +217,19 @@
+     return typeMap[type] || 'line';
+   }
+ 
+-  getColor(index) {
++  getColor(index, opacity = 1) {
+     const colors = [
+-      'rgb(75, 192, 192)',
+-      'rgb(255, 99, 132)',
+-      'rgb(54, 162, 235)',
+-      'rgb(255, 205, 86)',
+-      'rgb(153, 102, 255)',
+-      'rgb(255, 159, 64)'
++      [75, 192, 192],
++      [255, 99, 132],
++      [54, 162, 235],
++      [255, 205, 86],
++      [153, 102, 255],
++      [255, 159, 64]
+     ];
+-    return colors[index % colors.length];
++    const color = colors[index % colors.length];
++    return opacity === 1 
++      ? `rgb(${color[0]}, ${color[1]}, ${color[2]})` 
++      : `rgba(${color[0]}, ${color[1]}, ${color[2]}, ${opacity})`;
+   }
+ 
+   formatTimestamp(timestamp) {

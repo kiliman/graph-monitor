@@ -1,0 +1,17 @@
+diff --git a/Users/michael/Projects/oss/graph-monitor/data-capture/index.js b/Users/michael/Projects/oss/graph-monitor/data-capture/index.js
+index 1234567..abcdefg 100644
+--- a/Users/michael/Projects/oss/graph-monitor/data-capture/index.js
++++ b/Users/michael/Projects/oss/graph-monitor/data-capture/index.js
+@@ -38,8 +38,11 @@
+       this.scheduler.start();
+       
+       this.chartGenerator = new ChartGenerator(this.database, this.config, this.logger);
+-      this.startChartGeneration();
+       
++      // Generate charts immediately on startup
++      await this.chartGenerator.generateAllCharts();
++      
++      this.startChartGeneration();
+       this.startConfigWatcher();
+       this.setupShutdownHandlers();
+       

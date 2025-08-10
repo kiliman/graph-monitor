@@ -1,0 +1,32 @@
+diff --git a/Users/michael/Projects/oss/graph-monitor/data-capture/chartGenerator.js b/Users/michael/Projects/oss/graph-monitor/data-capture/chartGenerator.js
+index 1234567..abcdefg 100644
+--- a/Users/michael/Projects/oss/graph-monitor/data-capture/chartGenerator.js
++++ b/Users/michael/Projects/oss/graph-monitor/data-capture/chartGenerator.js
+@@ -23,14 +23,25 @@
+       await fs.mkdir(outputDir, { recursive: true });
+ 
+       const graphs = this.config.getGraphs();
++      let regeneratedCount = 0;
++      let skippedCount = 0;
+       
+       for (const [title, graphConfig] of Object.entries(graphs)) {
+-        await this.generateChart(title, graphConfig);
++        const filename = this.sanitizeFilename(title) + '.png';
++        const filepath = path.join(outputDir, filename);
++        const shouldRegenerate = await this.shouldRegenerateChart(filepath, title, graphConfig);
++        
++        if (shouldRegenerate) {
++          await this.generateChart(title, graphConfig);
++          regeneratedCount++;
++        } else {
++          skippedCount++;
++        }
+       }
+       
+       await this.generateIndexHtml();
+       
+-      this.logger.info('Generated all charts successfully');
++      this.logger.info(`Chart generation complete: ${regeneratedCount} regenerated, ${skippedCount} skipped`);
+     } catch (error) {
+       this.logger.error(`Error generating charts: ${error.message}`);
+     }

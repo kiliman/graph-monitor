@@ -1,0 +1,40 @@
+diff --git a/Users/michael/Projects/oss/graph-monitor/graph-web-app/src/components/DynamicChart.jsx b/Users/michael/Projects/oss/graph-monitor/graph-web-app/src/components/DynamicChart.jsx
+index 1234567..abcdefg 100644
+--- a/Users/michael/Projects/oss/graph-monitor/graph-web-app/src/components/DynamicChart.jsx
++++ b/Users/michael/Projects/oss/graph-monitor/graph-web-app/src/components/DynamicChart.jsx
+@@ -56,11 +56,30 @@
+         rawData = await getRollupMetrics(increment, metricKey, yAxisName, startTime);
+       }
+       
+-      const transformedData = transformMetricsData(
+-        rawData,
+-        config['x-axis'],
+-        config['y-axis']
+-      );
++      // For "all sites", we need to handle multiple keys
++      let transformedData;
++      if (metricKey === 'all' && rawData.length > 0 && rawData[0].key) {
++        // Group data by timestamp and aggregate
++        const groupedData = {};
++        rawData.forEach(item => {
++          const timestamp = item.timestamp;
++          if (!groupedData[timestamp]) {
++            groupedData[timestamp] = { timestamp, data: {} };
++          }
++          groupedData[timestamp].data[item.key] = item.value;
++        });
++        
++        transformedData = Object.values(groupedData).map(item => ({
++          timestamp: formatTimestamp(item.timestamp),
++          ...item.data
++        }));
++      } else {
++        transformedData = transformMetricsData(
++          rawData,
++          config['x-axis'],
++          config['y-axis']
++        );
++      }
+       
+       setData(transformedData);
+     } catch (err) {

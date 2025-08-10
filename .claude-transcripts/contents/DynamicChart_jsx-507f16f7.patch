@@ -1,0 +1,22 @@
+diff --git a/Users/michael/Projects/oss/graph-monitor/graph-web-app/src/components/DynamicChart.jsx b/Users/michael/Projects/oss/graph-monitor/graph-web-app/src/components/DynamicChart.jsx
+index 1234567..abcdefg 100644
+--- a/Users/michael/Projects/oss/graph-monitor/graph-web-app/src/components/DynamicChart.jsx
++++ b/Users/michael/Projects/oss/graph-monitor/graph-web-app/src/components/DynamicChart.jsx
+@@ -22,7 +22,7 @@
+   AreaChart: { Chart: AreaChart, DataComponent: Area }
+ };
+ 
+-export default function DynamicChart({ title, config }) {
++export default function DynamicChart({ title, config, refreshTrigger }) {
+   const [data, setData] = useState([]);
+   const [loading, setLoading] = useState(true);
+   const [error, setError] = useState(null);
+@@ -30,7 +30,7 @@
+ 
+   useEffect(() => {
+     fetchData();
+-  }, [config]);
++  }, [config, refreshTrigger]);
+ 
+   const fetchData = async () => {
+     try {

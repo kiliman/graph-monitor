@@ -1,0 +1,17 @@
+diff --git a/Users/michael/Projects/oss/graph-monitor/data-capture/scheduler.js b/Users/michael/Projects/oss/graph-monitor/data-capture/scheduler.js
+index 1234567..abcdefg 100644
+--- a/Users/michael/Projects/oss/graph-monitor/data-capture/scheduler.js
++++ b/Users/michael/Projects/oss/graph-monitor/data-capture/scheduler.js
+@@ -3,10 +3,11 @@
+ const Database = require('./database');
+ 
+ class MetricScheduler {
+-  constructor(config, database, logger) {
++  constructor(config, database, logger, rollupManager) {
+     this.config = config;
+     this.database = database;
+     this.logger = logger;
++    this.rollupManager = rollupManager;
+     this.executor = new CommandExecutor(logger);
+     this.tasks = new Map();
+     this.intervals = new Map();
